@@ -31,8 +31,10 @@ spec:
       serviceAccountName: devops-agent
       containers:
       - name: agent
-        image: devops-agent-r2d2:latest
-        imagePullPolicy: IfNotPresent
+        # Update with your GitHub username/organization
+        # Example: ghcr.io/username/devops-agent-r2d2:latest
+        image: ghcr.io/OWNER/devops-agent-r2d2:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
           name: http
