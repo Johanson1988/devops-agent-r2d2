@@ -1,0 +1,95 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: devops-agent-secrets
+  namespace: default
+type: Opaque
+stringData:
+  GITHUB_TOKEN: "ghp_your_token_here"  # Replace with actual token
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devops-agent-config
+  namespace: default
+data:
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-agent-r2d2
+  namespace: default
+  labels:
+    app: devops-agent-r2d2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-agent-r2d2
+  template:
+    metadata:
+      labels:
+        app: devops-agent-r2d2
+    spec:
+      containers:
+      - name: agent
+        image: devops-agent-r2d2:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: devops-agent-secrets
+              key: GITHUB_TOKEN
+        envFrom:
+        - configMapRef:
+            name: devops-agent-config
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-agent-r2d2
+  namespace: default
+spec:
+  selector:
+    app: devops-agent-r2d2
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  type: ClusterIP
