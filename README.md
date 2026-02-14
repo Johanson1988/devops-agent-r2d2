@@ -52,13 +52,15 @@ curl -X POST http://localhost:3000/api/test
 ## Kubernetes Deployment
 
 ```bash
-# Update Secret with your GitHub token
-kubectl edit secret devops-agent-secrets
+# 1. Create the secret with your GitHub token
+kubectl create secret generic devops-agent-secrets \
+  --from-literal=GITHUB_TOKEN='ghp_your_token_here' \
+  -n default
 
-# Apply manifests (includes RBAC for Job creation)
+# 2. Apply manifests (includes RBAC for Job creation)
 kubectl apply -f k8s/deployment.yaml
 
-# Check status
+# 3. Check status
 kubectl get pods -l app=devops-agent-r2d2
 kubectl logs -f deployment/devops-agent-r2d2
 

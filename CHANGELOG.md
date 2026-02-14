@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Secret creation moved to kubectl command instead of YAML for better security
+
 ## [0.1.0] - 2026-02-14
 
 ### Added
