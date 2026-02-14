@@ -55,7 +55,7 @@ curl -X POST http://localhost:3000/api/test
 # Update Secret with your GitHub token
 kubectl edit secret devops-agent-secrets
 
-# Apply manifests
+# Apply manifests (includes RBAC for Job creation)
 kubectl apply -f k8s/deployment.yaml
 
 # Check status
@@ -65,13 +65,91 @@ kubectl logs -f deployment/devops-agent-r2d2
 # Port forward for testing
 kubectl port-forward svc/devops-agent-r2d2 3000:80
 
-# Test
-curl -X POST http://localhost:3000/api/test
+# Create a deployment job
+curl -X POST http://localhost:3000/api/deploy \
+  -H "Content-Type: application/json" \
+  -d '{"name":"my-app","type":"static"}'
+
+# Watch the Kubernetes Job being created
+kubectl get jobs -w
+
+# View job logs
+kubectl logs job/deploy-xxxxx
 ```
+
+### RBAC Permissions
+
+The agent requires the following permissions:
+- **batch/jobs**: create, get, list, delete, watch
+- **pods**: get, list, watch (for log streaming)
+- **pods/log**: get (for log access)
+- **secrets**: get (for GitHub token access)
+
+These are configured in the ServiceAccount `devops-agent`.
 
 ## API Endpoints
 
-### POST /api/test
+### Deployment Endpoints
+
+#### POST /api/deploy
+Create a deployment job. Jobs are queued and executed sequentially.
+
+**Request:**
+```bash
+curl -X POST http://localhost:3000/api/deploy \
+  -H "Content-Type: application/json" \
+  -d '{"name":"my-app","type":"static"}'
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Deployment job created",
+  "data": {
+    "jobId": "deploy-abc123",
+    "status": "running",
+    "startTime": "2026-02-14T..."
+  }
+}
+```
+
+#### GET /api/deploy/:jobId
+Get job status and logs.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "jobId": "deploy-abc123",
+    "status": "succeeded",
+    "request": {"name": "my-app"},
+    "startTime": "2026-02-14T...",
+    "endTime": "2026-02-14T...",
+    "logs": ["[STDOUT] Worker started", "..."]
+  }
+}
+```
+
+#### GET /api/deploy/:jobId/logs
+Stream logs in real-time using Server-Sent Events (SSE).
+
+**Usage:**
+```bash
+curl -N http://localhost:3000/api/deploy/deploy-abc123/logs
+```
+
+**Response (SSE):**
+```
+data: {"log":"Worker started"}
+data: {"log":"Processing deploy..."}
+data: {"done":true,"status":"succeeded"}
+```
+
+### Testing Endpoints
+
+#### POST /api/test
 POC endpoint that calls GitHub API and returns authenticated user data.
 
 **Request:**
@@ -123,6 +201,23 @@ devops-agent-r2d2/
 ├── package.json
 └── tsconfig.json
 ```
+
+## Features
+
+### Job Execution
+- **Local Mode**: Executes jobs as child processes (for development)
+- **Kubernetes Mode**: Creates K8s Jobs for isolated execution (production)
+- **Auto-detection**: Automatically detects environment and uses appropriate method
+- **Sequential Processing**: One deployment at a time, others queued
+- **Real-time Logs**: SSE streaming for live log updates
+- **Automatic Cleanup**: Jobs cleaned up after completion (TTL: 1 hour in K8s)
+- **Timeout**: 10-minute timeout per job
+
+### API Features
+- RESTful endpoints for job management
+- Server-Sent Events for log streaming
+- Job status tracking and history
+- Health and readiness checks for K8s
 
 ## Environment Variables
 

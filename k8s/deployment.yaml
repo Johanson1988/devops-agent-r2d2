@@ -38,6 +38,7 @@ spec:
       labels:
         app: devops-agent-r2d2
     spec:
+      serviceAccountName: devops-agent
       containers:
       - name: agent
         image: devops-agent-r2d2:latest

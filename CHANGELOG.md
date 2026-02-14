@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-02-14
+
 ### Added
+- **Kubernetes Jobs integration**: Full support for running deployments as K8s Jobs in cluster environments
+  - `K8sService` for managing Kubernetes Job lifecycle (create, monitor, delete)
+  - Automatic Job creation with proper metadata, labels, and resource limits
+  - Real-time Pod log streaming from Kubernetes Jobs
+  - Job status monitoring (pending, running, succeeded, failed)
+  - Automatic Job cleanup with TTL (1 hour after completion)
+  - RBAC configuration: ServiceAccount, Role, and RoleBinding for batch/jobs permissions
+- Dual execution mode: Automatically detects environment and executes locally or in Kubernetes
 - Job queue system for sequential deployment execution
 - Deploy routes: `POST /api/deploy`, `GET /api/deploy/:jobId`, `GET /api/deploy/:jobId/logs`
 - Server-Sent Events (SSE) for real-time log streaming
@@ -18,14 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Worker script stub for deployment logic
 - Deploy queue service to manage job execution order
 - Local job execution using child processes with stdout/stderr capture
-
-### Changed
-- Jobs are now queued instead of rejected when another job is running
-- Multiple jobs can be created but execute sequentially
-
-## [0.1.0] - 2026-02-14
-
-### Added
 - Initial project setup with TypeScript and Fastify
 - GitHub API integration using @octokit/rest
 - REST API endpoints:
@@ -39,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both local and Kubernetes deployments
 - Service architecture:
   - `GitHubService` - GitHub API client wrapper
+  - `K8sService` - Kubernetes Job management
+  - `JobService` - Orchestrates local vs K8s execution
+  - `DeployQueueService` - Sequential job queue management
   - Singleton pattern for service instances
 - Error handling:
   - Global error handler
@@ -58,23 +63,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Service (ClusterIP)
   - ConfigMap for non-sensitive config
   - Secret for GitHub token
+  - ServiceAccount with RBAC for batch/jobs
   - Liveness and readiness probes
   - Graceful shutdown support
--Unreleased]: https://github.com/YOUR_USERNAME/devops-agent-r2d2/compare/v0.1.0...HEAD
-[ Documentation:
+- Documentation:
   - README with quick start guide
   - API endpoint documentation
   - Local and K8s deployment instructions
   - Environment variables reference
+
+### Changed
+- Jobs are now queued instead of rejected when another job is running
+- Multiple jobs can be created but execute sequentially
+- `job.service.ts` now delegates to `K8sService` when running in Kubernetes cluster
 
 ### Fixed
 - TypeScript configuration to include Node.js types
 - Logger configuration to avoid `pino-pretty` dependency
 - Implicit any types in route handlers
 - Port conflict handling
+- @kubernetes/client-node API compatibility issues (parameter order, response types)
 
 ### Technical Details
-- **Stack**: Fastify + TypeScript + @octokit/rest
+- **Stack**: Fastify + TypeScript + @octokit/rest + @kubernetes/client-node
 - **Node Version**: 20 (Alpine-based Docker image)
 - **Target**: ES2022
 - **Module System**: CommonJS

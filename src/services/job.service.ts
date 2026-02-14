@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { Job, DeployRequest } from '../types/job.types';
 import { getEnvironment } from '../utils/environment';
 import { deployQueue } from './deploy-queue.service';
+import { k8sService } from './k8s.service';
 import { config } from '../config';
 
 class JobService {
@@ -149,14 +150,55 @@ class JobService {
   }
 
   /**
-   * Execute job in Kubernetes (to be implemented)
+   * Execute job in Kubernetes
    */
   private async executeKubernetesJob(job: Job): Promise<void> {
-    // TODO: Implement Kubernetes Job creation in next phase
-    deployQueue.updateJobLogs(job.id, '[K8s] Kubernetes job execution not yet implemented');
-    deployQueue.updateJobLogs(job.id, '[K8s] Falling back to local execution for now');
-    
-    await this.executeLocalJob(job);
+    deployQueue.updateJobLogs(job.id, `[${new Date().toISOString()}] Starting Kubernetes Job...`);
+    deployQueue.updateJobLogs(job.id, `Job ID: ${job.id}`);
+    deployQueue.updateJobLogs(job.id, `Request: ${JSON.stringify(job.request)}`);
+
+    try {
+      // Create Kubernetes Job
+      await k8sService.createDeployJob(job.id, job.request);
+      deployQueue.updateJobLogs(job.id, '[K8s] Job created successfully');
+
+      // Wait a bit for pod to be created
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Get pod name
+      const podName = await k8sService.getPodNameForJob(job.id);
+      
+      if (!podName) {
+        throw new Error('Pod not found for job');
+      }
+
+      deployQueue.updateJobLogs(job.id, `[K8s] Pod: ${podName}`);
+
+      // Stream logs from pod
+      await k8sService.streamPodLogs(
+        podName,
+        (log) => {
+          deployQueue.updateJobLogs(job.id, `[POD] ${log}`);
+        },
+        (success) => {
+          if (success) {
+            deployQueue.updateJobLogs(job.id, `[${new Date().toISOString()}] Deployment succeeded`);
+            deployQueue.completeJob(job.id, true);
+          } else {
+            deployQueue.updateJobLogs(job.id, `[${new Date().toISOString()}] Deployment failed`);
+            deployQueue.completeJob(job.id, false, 'Pod failed');
+          }
+
+          // Cleanup (TTL will handle it, but can be cleaned immediately if needed)
+          // k8sService.deleteJob(job.id);
+        }
+      );
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      deployQueue.updateJobLogs(job.id, `[K8s ERROR] ${errorMsg}`);
+      deployQueue.completeJob(job.id, false, errorMsg);
+    }
   }
 
   /**

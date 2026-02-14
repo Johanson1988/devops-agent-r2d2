@@ -19,6 +19,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@kubernetes/client-node": "^1.4.0",
     "@octokit/rest": "^20.0.2",
     "dotenv": "^16.4.1",
     "fastify": "^5.7.4"
