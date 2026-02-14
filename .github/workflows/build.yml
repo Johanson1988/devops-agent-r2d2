@@ -73,11 +73,7 @@ jobs:
           path: infra-live
       
       - name: Install kustomize
-        run: |
-          curl -sSLo kustomize.tar.gz https://github.com/kubernetes-sigs/kustomize/releases/latest/download/kustomize_linux_amd64.tar.gz
-          tar -xzf kustomize.tar.gz
-          sudo mv kustomize /usr/local/bin/kustomize
-          kustomize version
+        uses: imranismail/setup-kustomize@v2
       
       - name: Bump image tag
         working-directory: infra-live/${{ env.INFRA_APP_PATH }}
