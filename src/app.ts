@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import { apiRoutes } from './routes/api.routes';
+import { deployRoutes } from './routes/deploy.routes';
 import { config } from './config';
 
 export async function buildApp() {
@@ -26,6 +27,7 @@ export async function buildApp() {
 
   // Register routes
   await fastify.register(apiRoutes);
+  await fastify.register(deployRoutes);
 
   return fastify;
 }
