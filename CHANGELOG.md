@@ -7,8 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-02-15
+
 ### Fixed
-- Workflow now forces lowercase image names to prevent duplicate entries in kustomization.yaml
+- Improved Kubernetes pod completion detection with retry logic
+- Fixed race condition where pod status check happened before pod reached final state
+- Added polling mechanism (up to 10 attempts) to properly detect Succeeded/Failed states
+- Jobs now correctly report "succeeded" status when worker completes successfully
+
+## [0.1.2] - 2026-02-15
+
+### Added
+- Worker image configuration via `WORKER_IMAGE` environment variable
+- Default worker image set to `ghcr.io/johanson1988/devops-agent-r2d2:latest`
+
+### Fixed
+- Kubernetes Jobs now use correct GHCR registry image instead of local image
+- Changed imagePullPolicy to "Always" for worker containers
+- Fixed CreateContainerConfigError due to missing GITHUB_TOKEN secret
+- Deployment scaled to 1 replica to fix in-memory job state synchronization (temporary solution)
 
 ## [0.1.1] - 2026-02-15
 

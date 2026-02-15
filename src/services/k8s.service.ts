@@ -177,21 +177,12 @@ export class KubernetesService {
 
       passThrough.on('error', (err: Error) => {
         console.error('Log stream error:', err);
-        onComplete(false);
+        this.waitForPodCompletion(podName, onComplete);
       });
 
       passThrough.on('end', async () => {
-        // Check final pod status
-        try {
-          const pod = await this.k8sApi.readNamespacedPodStatus({
-            name: podName,
-            namespace: this.namespace,
-          });
-          const phase = pod.status?.phase;
-          onComplete(phase === 'Succeeded');
-        } catch {
-          onComplete(false);
-        }
+        // Wait for pod to reach final state
+        this.waitForPodCompletion(podName, onComplete);
       });
       
       await logStream.log(
@@ -204,8 +195,53 @@ export class KubernetesService {
 
     } catch (error) {
       console.error('Error streaming logs:', error);
-      onComplete(false);
+      this.waitForPodCompletion(podName, onComplete);
     }
+  }
+
+  /**
+   * Wait for pod to reach final state (Succeeded or Failed)
+   */
+  private async waitForPodCompletion(
+    podName: string,
+    onComplete: (success: boolean) => void,
+    maxAttempts: number = 10,
+    delayMs: number = 1000
+  ): Promise<void> {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const pod = await this.k8sApi.readNamespacedPodStatus({
+          name: podName,
+          namespace: this.namespace,
+        });
+        
+        const phase = pod.status?.phase;
+        
+        if (phase === 'Succeeded') {
+          onComplete(true);
+          return;
+        }
+        
+        if (phase === 'Failed') {
+          onComplete(false);
+          return;
+        }
+        
+        // Still running, wait before next check
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        
+      } catch (error) {
+        console.error('Error checking pod status:', error);
+        if (i === maxAttempts - 1) {
+          onComplete(false);
+          return;
+        }
+      }
+    }
+    
+    // Timeout - assume failure
+    console.error(`Pod ${podName} did not reach final state after ${maxAttempts} attempts`);
+    onComplete(false);
   }
 
   /**
