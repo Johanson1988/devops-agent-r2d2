@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.1] - 2026-02-15
+## [0.4.0] - 2026-02-15
+
+### Added
+- **Auto-detect repoOwner**: If `repoOwner` is not provided in the deploy request, the API automatically obtains it from the authenticated GitHub user
+- **Self-image resolution**: API pod reads its own image from the Kubernetes API at startup and uses it for worker jobs, ensuring version consistency
 
 ### Fixed
-- **Auto-detect repoOwner**: If `repoOwner` is not provided in the deploy request, the API now automatically obtains it from the authenticated GitHub user
+- **Worker image mismatch**: Worker jobs were always using `:latest` because kustomize only patches container `image:` fields, not ConfigMap/env string values. Now resolved by reading the pod's own image spec at startup
+- **Template dotfiles not copied**: `cp -R src/templates/*` glob doesn't match dotfiles (`.gitignore.template`, `.dockerignore.template`). Replaced with `cp -a` for reliable full-directory copy
+- **Missing git in Docker image**: Worker needs `git` to clone/push repos but Alpine production image didn't have it installed
+- **Template variable `{{repoOwner}}` not replaced**: The template engine was missing the replacement for `{{repoOwner}}`, causing GitHub Actions workflows to fail with invalid YAML
 - Made `repoOwner` parameter optional in DeployRequest interface for better user experience
 - Added proper error handling for GitHub authentication failures
+- Force stdout/stderr flush before `process.exit()` in worker to prevent log loss in K8s
 
 ## [0.3.0] - 2026-02-15
 
