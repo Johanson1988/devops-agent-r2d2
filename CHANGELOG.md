@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-02-15
+
+### Added
+- Version info in `/health` endpoint response
+
+### Fixed
+- Missing RBAC resources (ServiceAccount, Role, RoleBinding) in deployment manifests
+- 403 Forbidden error when creating Kubernetes Jobs
+
 ### Changed
 - Secret creation moved to kubectl command instead of YAML for better security
 

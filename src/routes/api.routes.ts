@@ -1,5 +1,11 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { githubService } from '../services/github.service';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../../package.json'), 'utf-8')
+);
 
 export async function apiRoutes(fastify: FastifyInstance) {
   // POC endpoint: POST vacío que llama GitHub API
@@ -41,6 +47,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
   fastify.get('/health', async () => {
     return {
       status: 'healthy',
+      version: packageJson.version,
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     };
