@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-15
+
+### Added
+- **GitHub Repository Creation**: Automatically create GitHub repositories via API
+- `GitHubService.repositoryExists()` - Check if repository already exists
+- `GitHubService.createRepository()` - Create new repository with configuration
+- `GitHubService.createOrUpdateFile()` - Initialize repository with files
+- `TemplateService` - Generate README and .gitignore from templates
+- Template system for repository initialization (README.md, .gitignore)
+- Repository validation: Error if repository already exists
+- Support for private/public repository creation (default: private)
+- Detailed logging in deploy worker with step-by-step progress
+
+### Changed
+- Extended `DeployRequest` interface with repository configuration fields
+  - Added `repoOwner` (required), `repoSlug`, `private`, `description`
+  - Added deployment config: `type`, `branch`, `path`, `environment`, `domain`, `port`
+- `deploy-worker.ts` now creates actual GitHub repositories instead of simulation
+- API validation now requires both `name` and `repoOwner` fields
+
+### Fixed
+- Worker now properly validates required fields before execution
+
 ## [0.1.3] - 2026-02-15
 
 ### Fixed

@@ -1,8 +1,23 @@
 export interface DeployRequest {
+  // Identificación del proyecto
   name: string;
-  type?: 'static' | 'node' | 'python';
-  repoUrl?: string;
+  repoOwner: string;
+  repoSlug?: string;  // Default: name
+  
+  // Configuración del deployment
+  type?: 'static' | 'node' | 'python' | 'custom';
+  branch?: string;     // Default: 'main'
+  path?: string;       // Default: 'k8s'
+  environment?: string;  // dev, staging, prod
+  
+  // Configuración de la app
   domain?: string;
+  port?: number;
+  image?: string;
+  
+  // Opciones del repositorio
+  private?: boolean;  // Default: true
+  description?: string;
 }
 
 export interface JobStatus {

@@ -92,19 +92,16 @@ class JobService {
     deployQueue.updateJobLogs(job.id, `Request: ${JSON.stringify(job.request)}`);
 
     try {
-      // For now, simulate the worker
-      // In next phase, we'll call: node dist/workers/deploy-worker.js
+      // Execute the actual deploy worker (compiled JavaScript)
+      // __dirname will be dist/services, so ../workers is dist/workers
+      const path = require('path');
+      const workerPath = path.join(__dirname, '../workers/deploy-worker.js');
       const workerProcess = spawn('node', [
-        '-e',
-        `
-        console.log('Worker started');
-        console.log('Processing deploy request: ${job.request.name}');
-        setTimeout(() => {
-          console.log('Deploy completed successfully');
-          process.exit(0);
-        }, 5000);
-        `
-      ]);
+        workerPath,
+        JSON.stringify(job.request)
+      ], {
+        env: process.env, // Pass environment variables (including GITHUB_TOKEN)
+      });
 
       this.localProcesses.set(job.id, workerProcess);
 

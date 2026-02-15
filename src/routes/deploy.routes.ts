@@ -17,6 +17,14 @@ export async function deployRoutes(fastify: FastifyInstance) {
         };
       }
 
+      if (!deployRequest.repoOwner) {
+        reply.code(400);
+        return {
+          status: 'error',
+          message: 'Missing required field: repoOwner',
+        };
+      }
+
       // Create job
       const job = await jobService.createDeployJob(deployRequest);
 
