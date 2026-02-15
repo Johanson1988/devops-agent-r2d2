@@ -6,6 +6,7 @@ export class KubernetesService {
   private batchApi: k8s.BatchV1Api;
   private kc: k8s.KubeConfig;
   private namespace: string = 'default';
+  private workerImage: string;
 
   constructor() {
     this.kc = new k8s.KubeConfig();
@@ -20,6 +21,38 @@ export class KubernetesService {
 
     this.k8sApi = this.kc.makeApiClient(k8s.CoreV1Api);
     this.batchApi = this.kc.makeApiClient(k8s.BatchV1Api);
+
+    // Default worker image from config (used in local dev)
+    this.workerImage = config.worker.image;
+  }
+
+  /**
+   * Resolve the worker image by reading the current pod's image.
+   * This ensures worker jobs always use the same image as the API deployment.
+   * Must be called after construction (async).
+   */
+  async resolveWorkerImage(): Promise<void> {
+    const podName = process.env.HOSTNAME;
+    if (!podName) {
+      console.log('[K8s] No HOSTNAME env var, using default worker image:', this.workerImage);
+      return;
+    }
+
+    try {
+      const pod = await this.k8sApi.readNamespacedPod({
+        name: podName,
+        namespace: this.namespace,
+      });
+      const containerImage = pod.spec?.containers?.[0]?.image;
+      if (containerImage) {
+        this.workerImage = containerImage;
+        console.log(`[K8s] Worker image resolved from own pod: ${this.workerImage}`);
+      } else {
+        console.log('[K8s] Could not read container image from pod spec, using default:', this.workerImage);
+      }
+    } catch (error) {
+      console.log('[K8s] Could not resolve own pod image (may be running locally):', this.workerImage);
+    }
   }
 
   /**
@@ -59,7 +92,7 @@ export class KubernetesService {
             containers: [
               {
                 name: 'deploy-worker',
-                image: config.worker.image,
+                image: this.workerImage,
                 imagePullPolicy: 'Always',
                 command: ['node', 'dist/workers/deploy-worker.js'],
                 args: [JSON.stringify(deployRequest)],

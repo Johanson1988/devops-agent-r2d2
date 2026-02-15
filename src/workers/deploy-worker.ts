@@ -19,7 +19,6 @@ import * as os from 'os';
 
 console.log('Deploy Worker started');
 console.log('Args:', process.argv.slice(2));
-console.log('🔍 DEBUG: Worker version v0.3.1-debug-f5650bd');
 
 async function main() {
   try {
@@ -27,9 +26,7 @@ async function main() {
     const jobData: DeployRequest = process.argv[2] ? JSON.parse(process.argv[2]) : {};
     
     console.log(`Processing deployment: ${jobData.name || 'unknown'}`);
-    console.log('🔍 DEBUG: After printing deployment name');
     console.log(`Repository owner: ${jobData.repoOwner}`);
-    console.log('🔍 DEBUG: After printing repo owner');
 
     // Validate required fields
     if (!jobData.name) {

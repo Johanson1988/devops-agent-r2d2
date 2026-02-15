@@ -1,8 +1,12 @@
 import { buildApp } from './app';
 import { config } from './config';
+import { k8sService } from './services/k8s.service';
 
 async function start() {
   try {
+    // Resolve worker image from own pod (K8s) before starting
+    await k8sService.resolveWorkerImage();
+
     const app = await buildApp();
 
     // Graceful shutdown
