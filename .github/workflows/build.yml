@@ -29,7 +29,8 @@ jobs:
         id: vars
         run: |
           echo "short_sha=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
-          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" >> $GITHUB_OUTPUT
+          # Force lowercase for image name to match deployment.yaml
+          echo "image=$(echo '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       
       - uses: docker/setup-buildx-action@v3
       

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Workflow now forces lowercase image names to prevent duplicate entries in kustomization.yaml
+
 ## [0.1.1] - 2026-02-15
 
 ### Added
