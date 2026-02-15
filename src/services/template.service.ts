@@ -6,6 +6,7 @@ interface TemplateVariables {
   description?: string;
   environment?: string;
   repoFullName: string;
+  repoOwner: string;
   type?: string;
   branch?: string;
   domain?: string;
@@ -86,6 +87,92 @@ export class TemplateService {
     }
 
     return result;
+  }
+
+  /**
+   * Generate all frontend files
+   */
+  generateFrontendFiles(variables: TemplateVariables): {
+    'src/index.html': string;
+    'src/nginx.conf': string;
+    'Dockerfile': string;
+    '.github/workflows/build.yml': string;
+    '.dockerignore': string;
+  } {
+    return {
+      'src/index.html': this.generateIndexHtml(variables),
+      'src/nginx.conf': this.generateNginxConfig(),
+      'Dockerfile': this.generateDockerfile(),
+      '.github/workflows/build.yml': this.generateGithubWorkflow(variables),
+      '.dockerignore': this.generateDockerignore(),
+    };
+  }
+
+  /**
+   * Generate index.html for frontend
+   */
+  private generateIndexHtml(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'front/index.html.template');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating index.html:', error);
+      throw new Error('Failed to generate index.html');
+    }
+  }
+
+  /**
+   * Generate nginx.conf for frontend
+   */
+  private generateNginxConfig(): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'front/nginx.conf.template');
+      return fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error generating nginx.conf:', error);
+      throw new Error('Failed to generate nginx.conf');
+    }
+  }
+
+  /**
+   * Generate Dockerfile for frontend
+   */
+  private generateDockerfile(): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'front/Dockerfile.template');
+      return fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error generating Dockerfile:', error);
+      throw new Error('Failed to generate Dockerfile');
+    }
+  }
+
+  /**
+   * Generate GitHub Actions workflow
+   */
+  private generateGithubWorkflow(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'front/build-workflow.yml.template');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating GitHub workflow:', error);
+      throw new Error('Failed to generate GitHub workflow');
+    }
+  }
+
+  /**
+   * Generate .dockerignore
+   */
+  private generateDockerignore(): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'front/.dockerignore.template');
+      return fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error generating .dockerignore:', error);
+      throw new Error('Failed to generate .dockerignore');
+    }
   }
 }
 

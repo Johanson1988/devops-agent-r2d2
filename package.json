@@ -1,13 +1,13 @@
 {
   "name": "devops-agent-r2d2",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "GitOps automation agent for Kubernetes deployments",
   "main": "dist/index.js",
   "scripts": {
     "dev": "npm run build && concurrently \"tsc --watch\" \"nodemon --watch dist dist/index.js\"",
     "dev:simple": "tsx watch src/index.ts",
     "build": "tsc && npm run copy:templates",
-    "copy:templates": "mkdir -p dist/templates && cp src/templates/* dist/templates/",
+    "copy:templates": "mkdir -p dist/templates && cp -R src/templates/* dist/templates/",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit"

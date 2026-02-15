@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-15
+
+### Added
+- **Frontend Repository Templates**: Complete template system for creating frontend applications
+  - Professional HTML5 template with CSS animations and responsive design
+  - nginx configuration with gzip compression and security headers
+  - Multi-stage Dockerfile using nginx:1.25-alpine
+  - GitHub Actions workflow with GHCR push and Kubernetes deployment
+  - .dockerignore with comprehensive exclusions
+- **Repository Type System**: Added `type: 'front' | 'back'` to deployment requests
+  - Frontend type creates full-stack application with CI/CD (default)
+  - Backend type returns "not implemented yet" error
+- **Local Git Operations**: Changed from GitHub API to local git clone/push approach
+  - Clones repository to temporary directory
+  - Creates all files locally (supports nested directories like `.github/workflows/`)
+  - Commits and pushes all changes in a single operation
+  - Automatically cleans up temporary directories
+- **Enhanced Logging**: Detailed step-by-step logs with emojis for better visibility
+  - File creation logs with sizes
+  - Directory creation indicators
+  - Git operation status
+  - Cleanup confirmation
+
+### Changed
+- Repository creation now uses local filesystem + git push instead of GitHub Contents API
+- Deploy worker creates temporary directory for each deployment
+- Template copying now uses recursive `cp -R` command
+- Deployment type defaults to 'front' when not specified
+
+### Fixed
+- Resolved GitHub API 404 errors when creating files in nested directories
+- Fixed workflow scope requirement (token must have `workflow` scope)
+
+### Removed
+- Removed unused `createOrUpdateFile()` method from GitHubService
+- Removed incomplete `createFilesWithTree()` Git Tree API implementation
+- Cleaned up 170 lines of orphaned code from GitHub API experiments
+
 ## [0.2.0] - 2026-02-15
 
 ### Added

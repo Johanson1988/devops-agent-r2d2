@@ -126,58 +126,6 @@ export class GitHubService {
       throw new Error(`Failed to create repository: ${error.message}`);
     }
   }
-
-  /**
-   * Create or update a file in a repository
-   */
-  async createOrUpdateFile(options: {
-    owner: string;
-    repo: string;
-    path: string;
-    content: string;
-    message: string;
-    branch?: string;
-  }): Promise<void> {
-    try {
-      const { owner, repo, path, content, message, branch = 'main' } = options;
-
-      // Encode content to base64
-      const encodedContent = Buffer.from(content).toString('base64');
-
-      // Try to get the file first (to check if it exists)
-      let sha: string | undefined;
-      try {
-        const { data } = await this.octokit.repos.getContent({
-          owner,
-          repo,
-          path,
-          ref: branch,
-        });
-        if ('sha' in data) {
-          sha = data.sha;
-        }
-      } catch (error: any) {
-        // File doesn't exist, which is fine for creation
-        if (error.status !== 404) {
-          throw error;
-        }
-      }
-
-      // Create or update the file
-      await this.octokit.repos.createOrUpdateFileContents({
-        owner,
-        repo,
-        path,
-        message,
-        content: encodedContent,
-        branch,
-        sha, // Include sha if updating existing file
-      });
-    } catch (error: any) {
-      console.error('Error creating/updating file:', error);
-      throw new Error(`Failed to create/update file ${options.path}: ${error.message}`);
-    }
-  }
 }
 
 // Singleton instance
