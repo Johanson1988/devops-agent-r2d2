@@ -64,6 +64,7 @@ export class TemplateService {
     result = result.replace(/\{\{description\}\}/g, variables.description || 'Application deployment repository');
     result = result.replace(/\{\{environment\}\}/g, variables.environment || 'development');
     result = result.replace(/\{\{repoFullName\}\}/g, variables.repoFullName);
+    result = result.replace(/\{\{repoOwner\}\}/g, variables.repoOwner || '');
     result = result.replace(/\{\{type\}\}/g, variables.type || 'custom');
     result = result.replace(/\{\{branch\}\}/g, variables.branch || 'main');
     result = result.replace(/\{\{path\}\}/g, variables.path || 'k8s');
