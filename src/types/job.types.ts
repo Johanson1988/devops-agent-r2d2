@@ -1,7 +1,7 @@
 export interface DeployRequest {
   // Identificación del proyecto
   name: string;
-  repoOwner: string;
+  repoOwner?: string;  // Default: authenticated GitHub user
   repoSlug?: string;  // Default: name
   
   // Configuración del deployment

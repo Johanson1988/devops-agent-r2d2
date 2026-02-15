@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { DeployRequest } from '../types/job.types';
 import { jobService } from '../services/job.service';
+import { githubService } from '../services/github.service';
 
 export async function deployRoutes(fastify: FastifyInstance) {
   // Create deployment job
@@ -17,12 +18,18 @@ export async function deployRoutes(fastify: FastifyInstance) {
         };
       }
 
+      // If repoOwner is not provided, get it from authenticated GitHub user
       if (!deployRequest.repoOwner) {
-        reply.code(400);
-        return {
-          status: 'error',
-          message: 'Missing required field: repoOwner',
-        };
+        try {
+          const userData = await githubService.getAuthenticatedUser();
+          deployRequest.repoOwner = userData.user.login;
+        } catch (error) {
+          reply.code(401);
+          return {
+            status: 'error',
+            message: 'Failed to authenticate with GitHub. Please check GITHUB_TOKEN.',
+          };
+        }
       }
 
       // Create job

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-15
+
+### Fixed
+- **Auto-detect repoOwner**: If `repoOwner` is not provided in the deploy request, the API now automatically obtains it from the authenticated GitHub user
+- Made `repoOwner` parameter optional in DeployRequest interface for better user experience
+- Added proper error handling for GitHub authentication failures
+
 ## [0.3.0] - 2026-02-15
 
 ### Added
