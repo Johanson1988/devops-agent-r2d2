@@ -188,7 +188,12 @@ async function main() {
     console.log(`Clone URL: ${result.repo.clone_url}`);
     console.log('');
     
-    process.exit(0);
+    // Force flush stdout before exiting (K8s buffering issue)
+    if (process.stdout.write('')) {
+      process.exit(0);
+    } else {
+      process.stdout.once('drain', () => process.exit(0));
+    }
   } catch (error) {
     console.error('');
     console.error('═══════════════════════════════════════════════════════');
@@ -196,7 +201,13 @@ async function main() {
     console.error('═══════════════════════════════════════════════════════');
     console.error('Error:', error instanceof Error ? error.message : error);
     console.error('');
-    process.exit(1);
+    
+    // Force flush stderr before exiting
+    if (process.stderr.write('')) {
+      process.exit(1);
+    } else {
+      process.stderr.once('drain', () => process.exit(1));
+    }
   }
 }
 
