@@ -65,16 +65,18 @@ export class TemplateService {
     result = result.replace(/\{\{environment\}\}/g, variables.environment || 'development');
     result = result.replace(/\{\{repoFullName\}\}/g, variables.repoFullName);
     result = result.replace(/\{\{repoOwner\}\}/g, variables.repoOwner || '');
+    result = result.replace(/\{\{repoOwnerLower\}\}/g, (variables.repoOwner || '').toLowerCase());
     result = result.replace(/\{\{type\}\}/g, variables.type || 'custom');
     result = result.replace(/\{\{branch\}\}/g, variables.branch || 'main');
     result = result.replace(/\{\{path\}\}/g, variables.path || 'k8s');
     result = result.replace(/\{\{timestamp\}\}/g, variables.timestamp);
 
+    // Replace domain (direct replacement for infra templates + conditional blocks for README)
+    result = result.replace(/\{\{domain\}\}/g, variables.domain || '');
+
     // Handle conditional blocks for domain and port
     if (variables.domain) {
-      result = result.replace(/\{\{#if domain\}\}([^]*?)\{\{\/if\}\}/g, (_, content) => {
-        return content.replace(/\{\{domain\}\}/g, variables.domain || '');
-      });
+      result = result.replace(/\{\{#if domain\}\}([^]*?)\{\{\/if\}\}/g, (_, content) => content);
     } else {
       result = result.replace(/\{\{#if domain\}\}([^]*?)\{\{\/if\}\}/g, '');
     }
@@ -107,6 +109,29 @@ export class TemplateService {
       '.github/workflows/build.yml': this.generateGithubWorkflow(variables),
       '.dockerignore': this.generateDockerignore(),
     };
+  }
+
+  /**
+   * Generate infra-live Kubernetes manifests for an application.
+   * These are placed under apps/<name>/ in the infra-live repository.
+   */
+  generateInfraFiles(variables: TemplateVariables): Record<string, string> {
+    const infraDir = path.join(this.templatesDir, 'infra');
+    const templateFiles = ['deployment.yaml', 'service.yaml', 'ingress.yaml', 'kustomization.yaml'];
+    const result: Record<string, string> = {};
+
+    for (const file of templateFiles) {
+      try {
+        const templatePath = path.join(infraDir, `${file}.template`);
+        const template = fs.readFileSync(templatePath, 'utf-8');
+        result[file] = this.replaceVariables(template, variables);
+      } catch (error) {
+        console.error(`Error generating infra template ${file}:`, error);
+        throw new Error(`Failed to generate infra template: ${file}`);
+      }
+    }
+
+    return result;
   }
 
   /**

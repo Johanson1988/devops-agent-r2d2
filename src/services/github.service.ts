@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/rest';
 import { config } from '../config';
+import sodium from 'libsodium-wrappers';
 
 export class GitHubService {
   private octokit: Octokit;
@@ -124,6 +125,44 @@ export class GitHubService {
     } catch (error: any) {
       console.error('GitHub API error creating repository:', error);
       throw new Error(`Failed to create repository: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create or update an Actions secret on a repository.
+   * Uses NaCl sealed box encryption as required by the GitHub API.
+   */
+  async createRepoSecret(
+    owner: string,
+    repo: string,
+    secretName: string,
+    secretValue: string,
+  ): Promise<void> {
+    try {
+      // 1. Get the repository's public key for encrypting secrets
+      const { data: publicKeyData } = await this.octokit.actions.getRepoPublicKey({
+        owner,
+        repo,
+      });
+
+      // 2. Encrypt the secret value using NaCl sealed box
+      await sodium.ready;
+      const binKey = sodium.from_base64(publicKeyData.key, sodium.base64_variants.ORIGINAL);
+      const binSecret = sodium.from_string(secretValue);
+      const encBytes = sodium.crypto_box_seal(binSecret, binKey);
+      const encryptedValue = sodium.to_base64(encBytes, sodium.base64_variants.ORIGINAL);
+
+      // 3. Create or update the secret
+      await this.octokit.actions.createOrUpdateRepoSecret({
+        owner,
+        repo,
+        secret_name: secretName,
+        encrypted_value: encryptedValue,
+        key_id: publicKeyData.key_id,
+      });
+    } catch (error: any) {
+      console.error('GitHub API error creating secret:', error);
+      throw new Error(`Failed to create secret ${secretName}: ${error.message}`);
     }
   }
 }

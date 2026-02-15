@@ -4,6 +4,7 @@ import { config } from '../config';
 export class KubernetesService {
   private k8sApi: k8s.CoreV1Api;
   private batchApi: k8s.BatchV1Api;
+  private customApi: k8s.CustomObjectsApi;
   private kc: k8s.KubeConfig;
   private namespace: string = 'default';
   private workerImage: string;
@@ -21,6 +22,7 @@ export class KubernetesService {
 
     this.k8sApi = this.kc.makeApiClient(k8s.CoreV1Api);
     this.batchApi = this.kc.makeApiClient(k8s.BatchV1Api);
+    this.customApi = this.kc.makeApiClient(k8s.CustomObjectsApi);
 
     // Default worker image from config (used in local dev)
     this.workerImage = config.worker.image;
@@ -89,6 +91,7 @@ export class KubernetesService {
           },
           spec: {
             restartPolicy: 'Never',
+            serviceAccountName: 'devops-agent',
             containers: [
               {
                 name: 'deploy-worker',
@@ -305,6 +308,60 @@ export class KubernetesService {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Create an ArgoCD Application CRD to manage an app's deployment.
+   * The Application watches infra-live/apps/<appName> and auto-syncs.
+   */
+  async createArgoCDApplication(
+    appName: string,
+    repoOwner: string,
+  ): Promise<void> {
+    const application = {
+      apiVersion: 'argoproj.io/v1alpha1',
+      kind: 'Application',
+      metadata: {
+        name: appName,
+        namespace: 'argocd',
+      },
+      spec: {
+        project: 'default',
+        source: {
+          repoURL: `https://github.com/${repoOwner}/infra-live.git`,
+          targetRevision: 'main',
+          path: `apps/${appName}`,
+        },
+        destination: {
+          server: 'https://kubernetes.default.svc',
+          namespace: 'default',
+        },
+        syncPolicy: {
+          automated: {
+            prune: true,
+            selfHeal: true,
+            allowEmpty: false,
+          },
+          syncOptions: ['CreateNamespace=true'],
+          retry: {
+            limit: 5,
+            backoff: {
+              duration: '5s',
+              factor: 2,
+              maxDuration: '3m',
+            },
+          },
+        },
+      },
+    };
+
+    await this.customApi.createNamespacedCustomObject({
+      group: 'argoproj.io',
+      version: 'v1alpha1',
+      namespace: 'argocd',
+      plural: 'applications',
+      body: application,
+    });
   }
 }
 

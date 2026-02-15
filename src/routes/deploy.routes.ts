@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { DeployRequest } from '../types/job.types';
 import { jobService } from '../services/job.service';
 import { githubService } from '../services/github.service';
+import { config } from '../config';
 
 export async function deployRoutes(fastify: FastifyInstance) {
   // Create deployment job
@@ -30,6 +31,11 @@ export async function deployRoutes(fastify: FastifyInstance) {
             message: 'Failed to authenticate with GitHub. Please check GITHUB_TOKEN.',
           };
         }
+      }
+
+      // Resolve domain if not provided (appName.INFRA_DOMAIN)
+      if (!deployRequest.domain) {
+        deployRequest.domain = `${deployRequest.name}.${config.infra.domain}`;
       }
 
       // Create job

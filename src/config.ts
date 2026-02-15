@@ -15,6 +15,9 @@ interface Config {
   worker: {
     image: string;
   };
+  infra: {
+    domain: string;
+  };
   env: string;
   logLevel: string;
 }
@@ -37,6 +40,9 @@ export const config: Config = {
   },
   worker: {
     image: getEnvVar('WORKER_IMAGE', 'ghcr.io/johanson1988/devops-agent-r2d2:latest'),
+  },
+  infra: {
+    domain: getEnvVar('INFRA_DOMAIN', 'johannmoreno.dev'),
   },
   env: getEnvVar('NODE_ENV', 'development'),
   logLevel: getEnvVar('LOG_LEVEL', 'info'),

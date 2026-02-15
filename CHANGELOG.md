@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-15
+
+### Added
+- **Full GitOps pipeline**: `POST /api/deploy` now creates app repo, configures CI/CD secrets, pushes K8s manifests to infra-live, and registers ArgoCD Application
+- **INFRA_PAT secret automation**: Worker creates `INFRA_PAT` GitHub Actions secret using NaCl sealed-box encryption (`libsodium-wrappers`)
+- **Infra-live manifest generation**: K8s templates (deployment, service, ingress, kustomization.yaml) generated and pushed to `infra-live/apps/<name>/`
+- **ArgoCD Application creation**: Worker creates ArgoCD `Application` CRD via K8s CustomObjects API with auto-sync, prune, and self-heal
+- **Domain auto-resolution**: Defaults to `<name>.<INFRA_DOMAIN>` when not provided
+- **INFRA_DOMAIN config**: New env var for base domain (default: `johannmoreno.dev`)
+- **ClusterRole for ArgoCD**: RBAC to allow devops-agent ServiceAccount to create ArgoCD Applications
+- **Worker ServiceAccount**: Worker K8s Jobs now use `devops-agent` ServiceAccount
+
+### Changed
+- Deploy worker expanded from 5 to 8 steps (INFRA_PAT, infra-live push, ArgoCD Application)
+- Template engine supports `{{repoOwnerLower}}` and direct `{{domain}}` replacement
+
+### Dependencies
+- Added `libsodium-wrappers` for GitHub Actions secret encryption
+
 ## [0.4.0] - 2026-02-15
 
 ### Added
