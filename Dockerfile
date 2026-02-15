@@ -21,8 +21,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install security updates
-RUN apk --no-cache upgrade
+# Install security updates and git (needed by worker to clone/push repos)
+RUN apk --no-cache upgrade && apk --no-cache add git
 
 # Copy package files
 COPY package*.json ./
