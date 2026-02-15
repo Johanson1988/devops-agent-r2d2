@@ -12,6 +12,9 @@ interface Config {
     port: number;
     host: string;
   };
+  worker: {
+    image: string;
+  };
   env: string;
   logLevel: string;
 }
@@ -31,6 +34,9 @@ export const config: Config = {
   server: {
     port: parseInt(getEnvVar('PORT', '3000'), 10),
     host: getEnvVar('HOST', '0.0.0.0'),
+  },
+  worker: {
+    image: getEnvVar('WORKER_IMAGE', 'ghcr.io/johanson1988/devops-agent-r2d2:latest'),
   },
   env: getEnvVar('NODE_ENV', 'development'),
   logLevel: getEnvVar('LOG_LEVEL', 'info'),

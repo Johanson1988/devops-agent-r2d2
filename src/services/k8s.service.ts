@@ -59,8 +59,8 @@ export class KubernetesService {
             containers: [
               {
                 name: 'deploy-worker',
-                image: 'devops-agent-r2d2:latest', // TODO: Use actual image with registry
-                imagePullPolicy: 'IfNotPresent',
+                image: config.worker.image,
+                imagePullPolicy: 'Always',
                 command: ['node', 'dist/workers/deploy-worker.js'],
                 args: [JSON.stringify(deployRequest)],
                 env: [

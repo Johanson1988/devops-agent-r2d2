@@ -1,6 +1,6 @@
 {
   "name": "devops-agent-r2d2",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "GitOps automation agent for Kubernetes deployments",
   "main": "dist/index.js",
   "scripts": {
