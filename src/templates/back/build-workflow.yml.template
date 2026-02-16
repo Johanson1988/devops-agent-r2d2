@@ -70,7 +70,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="sha-${{ needs.build.outputs.short_sha }}"
-          IMG="${{ needs.build.outputs.image }}"
+          IMG=$(echo "${{ needs.build.outputs.image }}" | tr '[:upper:]' '[:lower:]')
           echo "Updating ${IMG} to tag: ${TAG}"
           kustomize edit set image "${IMG}=${IMG}:${TAG}"
           echo "Updated kustomization.yaml:"
