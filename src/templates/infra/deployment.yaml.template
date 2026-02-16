@@ -19,10 +19,10 @@ spec:
       - name: ghcr-secret
       containers:
       - name: {{name}}
-        image: ghcr.io/{{repoOwnerLower}}/{{name}}
+        image: ghcr.io/{{repoOwner}}/{{name}}
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 80
+        - containerPort: {{containerPort}}
         resources:
           requests:
             cpu: 50m
@@ -32,13 +32,13 @@ spec:
             memory: 128Mi
         livenessProbe:
           httpGet:
-            path: /
-            port: 80
+            path: {{healthPath}}
+            port: {{containerPort}}
           initialDelaySeconds: 10
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /
-            port: 80
+            path: {{healthPath}}
+            port: {{containerPort}}
           initialDelaySeconds: 5
           periodSeconds: 5

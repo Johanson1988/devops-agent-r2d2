@@ -13,6 +13,8 @@ interface TemplateVariables {
   port?: number;
   path?: string;
   timestamp: string;
+  containerPort?: number;
+  healthPath?: string;
 }
 
 export class TemplateService {
@@ -73,6 +75,8 @@ export class TemplateService {
 
     // Replace domain (direct replacement for infra templates + conditional blocks for README)
     result = result.replace(/\{\{domain\}\}/g, variables.domain || '');
+    result = result.replace(/\{\{containerPort\}\}/g, String(variables.containerPort || 80));
+    result = result.replace(/\{\{healthPath\}\}/g, variables.healthPath || '/');
 
     // Handle conditional blocks for domain and port
     if (variables.domain) {

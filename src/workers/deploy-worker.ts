@@ -89,6 +89,9 @@ async function main() {
       port: jobData.port,
       path: jobData.path || 'k8s',
       timestamp,
+      // Set container port and health path based on deployment type
+      containerPort: deploymentType === 'back' ? 3000 : 80,
+      healthPath: deploymentType === 'back' ? '/health' : '/',
     };
 
     const readmeContent = templateService.generateReadme(variables);

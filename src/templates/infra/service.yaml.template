@@ -8,6 +8,6 @@ spec:
     app: {{name}}
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: {{containerPort}}
     protocol: TCP
   type: ClusterIP

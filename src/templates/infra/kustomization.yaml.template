@@ -7,5 +7,5 @@ resources:
   - ingress.yaml
 
 images:
-  - name: ghcr.io/{{repoOwnerLower}}/{{name}}
+  - name: ghcr.io/{{repoOwner}}/{{name}}
     newTag: sha-0000000
