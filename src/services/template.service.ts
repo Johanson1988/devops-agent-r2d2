@@ -112,6 +112,27 @@ export class TemplateService {
   }
 
   /**
+   * Generate all backend files
+   */
+  generateBackendFiles(variables: TemplateVariables): {
+    'index.js': string;
+    'package.json': string;
+    'Dockerfile': string;
+    '.github/workflows/build.yml': string;
+    '.dockerignore': string;
+    'README.md': string;
+  } {
+    return {
+      'index.js': this.generateBackendIndex(variables),
+      'package.json': this.generateBackendPackageJson(variables),
+      'Dockerfile': this.generateBackendDockerfile(),
+      '.github/workflows/build.yml': this.generateBackendGithubWorkflow(variables),
+      '.dockerignore': this.generateBackendDockerignore(),
+      'README.md': this.generateBackendReadme(variables),
+    };
+  }
+
+  /**
    * Generate infra-live Kubernetes manifests for an application.
    * These are placed under apps/<name>/ in the infra-live repository.
    */
@@ -135,7 +156,7 @@ export class TemplateService {
   }
 
   /**
-   * Generate index.html for frontend
+   * Frontend file generators
    */
   private generateIndexHtml(variables: TemplateVariables): string {
     try {
@@ -148,9 +169,6 @@ export class TemplateService {
     }
   }
 
-  /**
-   * Generate nginx.conf for frontend
-   */
   private generateNginxConfig(): string {
     try {
       const templatePath = path.join(this.templatesDir, 'front/nginx.conf.template');
@@ -161,9 +179,6 @@ export class TemplateService {
     }
   }
 
-  /**
-   * Generate Dockerfile for frontend
-   */
   private generateDockerfile(): string {
     try {
       const templatePath = path.join(this.templatesDir, 'front/Dockerfile.template');
@@ -174,9 +189,6 @@ export class TemplateService {
     }
   }
 
-  /**
-   * Generate GitHub Actions workflow
-   */
   private generateGithubWorkflow(variables: TemplateVariables): string {
     try {
       const templatePath = path.join(this.templatesDir, 'front/build-workflow.yml.template');
@@ -188,9 +200,6 @@ export class TemplateService {
     }
   }
 
-  /**
-   * Generate .dockerignore
-   */
   private generateDockerignore(): string {
     try {
       const templatePath = path.join(this.templatesDir, 'front/.dockerignore.template');
@@ -198,6 +207,73 @@ export class TemplateService {
     } catch (error) {
       console.error('Error generating .dockerignore:', error);
       throw new Error('Failed to generate .dockerignore');
+    }
+  }
+
+  /**
+   * Backend file generators
+   */
+  private generateBackendIndex(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/index.js.template');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating backend index.js:', error);
+      throw new Error('Failed to generate backend index.js');
+    }
+  }
+
+  private generateBackendPackageJson(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/package.json.template');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating backend package.json:', error);
+      throw new Error('Failed to generate backend package.json');
+    }
+  }
+
+  private generateBackendDockerfile(): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/Dockerfile.template');
+      return fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error generating backend Dockerfile:', error);
+      throw new Error('Failed to generate backend Dockerfile');
+    }
+  }
+
+  private generateBackendGithubWorkflow(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/build-workflow.yml.template');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating backend GitHub workflow:', error);
+      throw new Error('Failed to generate backend GitHub workflow');
+    }
+  }
+
+  private generateBackendDockerignore(): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/.dockerignore.template');
+      return fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error generating backend .dockerignore:', error);
+      throw new Error('Failed to generate backend .dockerignore');
+    }
+  }
+
+  private generateBackendReadme(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/README.template.md');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating backend README:', error);
+      throw new Error('Failed to generate backend README');
     }
   }
 }

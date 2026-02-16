@@ -68,11 +68,8 @@ async function main() {
     console.log(`Deployment type: ${deploymentType}`);
 
     // Check if type is supported
-    if (deploymentType === 'back') {
-      throw new Error('Backend deployments are not implemented yet. Please use type: "front" for now.');
-    }
 
-    if (deploymentType !== 'front') {
+    if (deploymentType !== 'front' && deploymentType !== 'back') {
       throw new Error(`Unknown deployment type: ${deploymentType}. Supported types: front, back`);
     }
 
@@ -105,6 +102,15 @@ async function main() {
       console.log('📦 Generando archivos de aplicación frontend...');
       projectFiles = templateService.generateFrontendFiles(variables);
       console.log(`✓ Generated ${Object.keys(projectFiles).length} frontend files`);
+      console.log('   Archivos generados:');
+      Object.keys(projectFiles).forEach(filePath => {
+        const size = projectFiles[filePath].length;
+        console.log(`   - ${filePath} (${size} bytes)`);
+      });
+    } else if (deploymentType === 'back') {
+      console.log('📦 Generando archivos de aplicación backend...');
+      projectFiles = templateService.generateBackendFiles(variables);
+      console.log(`✓ Generated ${Object.keys(projectFiles).length} backend files`);
       console.log('   Archivos generados:');
       Object.keys(projectFiles).forEach(filePath => {
         const size = projectFiles[filePath].length;

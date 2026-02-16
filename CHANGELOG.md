@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-16
+
+### Added
+- **Backend deployment support**: Full support for `type: "back"` with Express API templates
+  - Node.js Express API with `/health` endpoint returning `{ status: 'ok', version: '1.0.0' }`
+  - package.json with Express dependency
+  - Dockerfile using Node 22-alpine
+  - GitHub Actions workflow (build, push to GHCR, update infra-live)
+  - .dockerignore for Node.js projects
+  - README.md with usage instructions
+- `TemplateService.generateBackendFiles()` method with dedicated backend file generators
+- Backend template directory structure (`src/templates/back/`)
+
+### Changed
+- Deploy worker now handles both `type: "front"` and `type: "back"` deployments
+- Removed "Backend deployments are not implemented yet" error
+
 ## [0.5.0] - 2026-02-15
 
 ### Added
