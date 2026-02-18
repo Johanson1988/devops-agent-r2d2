@@ -1,14 +1,22 @@
 # {{name}} Backend API
 
-Simple Express API with `/health` endpoint for GitOps demo.
+Express API built with TypeScript featuring a `/health` endpoint for GitOps demo.
 
-## Usage
+## Development
 
 ```sh
 npm install
+npm run dev  # Development mode with ts-node
+```
+
+## Production Build
+
+```sh
+npm install
+npm run build
 npm start
 ```
 
 ## Health Check
 
-GET `/health` → `{ status: "ok", version: "1.0.0" }`
+GET `/health` → `{ status: "ok", version: "1.0.0", timestamp: "2026-02-18T..." }`

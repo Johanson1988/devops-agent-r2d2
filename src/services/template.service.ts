@@ -105,6 +105,7 @@ export class TemplateService {
     'Dockerfile': string;
     '.github/workflows/build.yml': string;
     '.dockerignore': string;
+    'CHANGELOG.md': string;
   } {
     return {
       'src/index.html': this.generateIndexHtml(variables),
@@ -112,6 +113,7 @@ export class TemplateService {
       'Dockerfile': this.generateDockerfile(),
       '.github/workflows/build.yml': this.generateGithubWorkflow(variables),
       '.dockerignore': this.generateDockerignore(),
+      'CHANGELOG.md': this.generateFrontendChangelog(variables),
     };
   }
 
@@ -119,20 +121,24 @@ export class TemplateService {
    * Generate all backend files
    */
   generateBackendFiles(variables: TemplateVariables): {
-    'index.js': string;
+    'src/index.ts': string;
     'package.json': string;
+    'tsconfig.json': string;
     'Dockerfile': string;
     '.github/workflows/build.yml': string;
     '.dockerignore': string;
     'README.md': string;
+    'CHANGELOG.md': string;
   } {
     return {
-      'index.js': this.generateBackendIndex(variables),
+      'src/index.ts': this.generateBackendIndex(variables),
       'package.json': this.generateBackendPackageJson(variables),
+      'tsconfig.json': this.generateBackendTsConfig(),
       'Dockerfile': this.generateBackendDockerfile(),
       '.github/workflows/build.yml': this.generateBackendGithubWorkflow(variables),
       '.dockerignore': this.generateBackendDockerignore(),
       'README.md': this.generateBackendReadme(variables),
+      'CHANGELOG.md': this.generateBackendChangelog(variables),
     };
   }
 
@@ -219,12 +225,12 @@ export class TemplateService {
    */
   private generateBackendIndex(variables: TemplateVariables): string {
     try {
-      const templatePath = path.join(this.templatesDir, 'back/index.js.template');
+      const templatePath = path.join(this.templatesDir, 'back/index.ts.template');
       let template = fs.readFileSync(templatePath, 'utf-8');
       return this.replaceVariables(template, variables);
     } catch (error) {
-      console.error('Error generating backend index.js:', error);
-      throw new Error('Failed to generate backend index.js');
+      console.error('Error generating backend index.ts:', error);
+      throw new Error('Failed to generate backend index.ts');
     }
   }
 
@@ -278,6 +284,38 @@ export class TemplateService {
     } catch (error) {
       console.error('Error generating backend README:', error);
       throw new Error('Failed to generate backend README');
+    }
+  }
+
+  private generateBackendTsConfig(): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/tsconfig.json.template');
+      return fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error generating backend tsconfig.json:', error);
+      throw new Error('Failed to generate backend tsconfig.json');
+    }
+  }
+
+  private generateBackendChangelog(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'back/CHANGELOG.template.md');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating backend CHANGELOG:', error);
+      throw new Error('Failed to generate backend CHANGELOG');
+    }
+  }
+
+  private generateFrontendChangelog(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'front/CHANGELOG.template.md');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating frontend CHANGELOG:', error);
+      throw new Error('Failed to generate frontend CHANGELOG');
     }
   }
 }
