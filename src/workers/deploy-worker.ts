@@ -9,14 +9,15 @@
  * - Create ArgoCD application
  */
 
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { DeployRequest } from '../types/job.types';
 import { GitHubService } from '../services/github.service';
-import { TemplateService } from '../services/template.service';
 import { KubernetesService } from '../services/k8s.service';
-import * as fs from 'fs';
-import * as path from 'path';
+import { TemplateService } from '../services/template.service';
 import { execSync } from 'child_process';
-import * as os from 'os';
 
 console.log('Deploy Worker started');
 console.log('Args:', process.argv.slice(2));

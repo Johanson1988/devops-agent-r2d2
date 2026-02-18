@@ -2,6 +2,19 @@
 
 GitOps automation agent for Kubernetes deployments with ArgoCD.
 
+**Production Endpoint**: `https://devops-agent-r2d2.johannmoreno.dev`
+
+## Features
+
+- 🚀 **One-Click Deployments**: Create frontend or backend apps with a single API call
+- 📦 **Full GitOps Pipeline**: Auto-creates GitHub repos, CI/CD workflows, K8s manifests, and ArgoCD apps
+- 🔄 **Auto-Sync**: GitHub Actions builds and pushes to GHCR, ArgoCD syncs automatically
+- 🎯 **Two Deployment Types**:
+  - **Frontend** (`type: "front"`): Static HTML + nginx
+  - **Backend** (`type: "back"`): Node.js Express API with `/health` endpoint
+- 🔐 **Secure**: Auto-configures GitHub secrets and imagePullSecrets
+- 📊 **Observable**: Real-time logs via Server-Sent Events
+
 ## Quick Start (Local)
 
 ```bash
@@ -91,17 +104,48 @@ These are configured in the ServiceAccount `devops-agent`.
 
 ## API Endpoints
 
+### Production Endpoint
+All examples below use the production endpoint: `https://devops-agent-r2d2.johannmoreno.dev`
+
+For local development, replace with `http://localhost:3000`
+
 ### Deployment Endpoints
 
 #### POST /api/deploy
-Create a deployment job. Jobs are queued and executed sequentially.
+Create a deployment job. Automatically creates:
+1. GitHub repository with project files
+2. GitHub Actions workflow (build + push to GHCR)
+3. Kubernetes manifests in `infra-live` repo
+4. ArgoCD Application for auto-sync
 
-**Request:**
+**Frontend Deployment:**
 ```bash
-curl -X POST http://localhost:3000/api/deploy \
+curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
   -H "Content-Type: application/json" \
-  -d '{"name":"my-app","type":"static"}'
+  -d '{
+    "name": "my-frontend",
+    "type": "front",
+    "description": "My awesome frontend app"
+  }'
 ```
+
+**Backend Deployment:**
+```bash
+curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "my-api",
+    "type": "back",
+    "description": "My awesome backend API"
+  }'
+```
+
+**Parameters:**
+- `name` (required): App name (becomes repo name and domain subdomain)
+- `type` (required): `"front"` for frontend (HTML+nginx) or `"back"` for backend (Express API)
+- `description` (optional): Repository description
+- `domain` (optional): Custom domain (defaults to `<name>.johannmoreno.dev`)
+- `repoOwner` (optional): GitHub username (auto-detected from token if not provided)
 
 **Response:**
 ```json
@@ -109,27 +153,89 @@ curl -X POST http://localhost:3000/api/deploy \
   "status": "success",
   "message": "Deployment job created",
   "data": {
-    "jobId": "deploy-abc123",
+    "jobId": "deploy-mlp9rdyj-oz9wv",
     "status": "running",
-    "startTime": "2026-02-14T..."
+    "startTime": "2026-02-16T14:28:07.915Z"
   }
 }
 ```
 
+**What Gets Created:**
+
+*Frontend (type: "front"):*
+- ✅ GitHub repo with: `index.html`, `nginx.conf`, `Dockerfile`, GitHub Actions workflow
+- ✅ Nginx-based static site on port 80
+- ✅ Live at: `https://<name>.johannmoreno.dev`
+
+*Backend (type: "back"):*
+- ✅ GitHub repo with: `index.js`, `package.json`, `Dockerfile`, GitHub Actions workflow
+- ✅ Express API with `/health` endpoint on port 3000
+- ✅ Live at: `https://<name>.johannmoreno.dev/health`
+
 #### GET /api/deploy/:jobId
 Get job status and logs.
 
-**Response:**
+**Example:**
+```bash
+curl https://devops-agent-r2d2.johannmoreno.dev/api/deploy/deploy-mlp9rdyj-oz9wv
+```
+
+**Response (Running):**
 ```json
 {
   "status": "success",
   "data": {
-    "jobId": "deploy-abc123",
+    "jobId": "deploy-mlp9rdyj-oz9wv",
+    "status": "running",
+    "request": {"name": "my-api", "type": "back"},
+    "startTime": "2026-02-16T14:28:07.915Z",
+    "logs": [
+      "[STDOUT] Starting deployment job...",
+      "[STDOUT] Creating GitHub repository my-api...",
+      "[STDOUT] Repository created successfully"
+    ]
+  }
+}
+```
+
+**Response (Completed):**
+```json
+{
+  "status": "success",
+  "data": {
+    "jobId": "deploy-mlp9rdyj-oz9wv",
     "status": "succeeded",
-    "request": {"name": "my-app"},
-    "startTime": "2026-02-14T...",
-    "endTime": "2026-02-14T...",
-    "logs": ["[STDOUT] Worker started", "..."]
+    "request": {"name": "my-api", "type": "back"},
+    "startTime": "2026-02-16T14:28:07.915Z",
+    "endTime": "2026-02-16T14:30:45.123Z",
+    "logs": [
+      "[STDOUT] Starting deployment job...",
+      "[STDOUT] Creating GitHub repository my-api...",
+      "[STDOUT] Repository created: https://github.com/johanson1988/my-api",
+      "[STDOUT] Creating deployment files...",
+      "[STDOUT] Pushing files to GitHub...",
+      "[STDOUT] Creating infrastructure manifests...",
+      "[STDOUT] ✅ Deployment successful!",
+      "[STDOUT] App will be live at: https://my-api.johannmoreno.dev"
+    ]
+  }
+}
+```
+
+**Response (Failed):**
+```json
+{
+  "status": "success",
+  "data": {
+    "jobId": "deploy-mlp9rdyj-oz9wv",
+    "status": "failed",
+    "request": {"name": "my-api", "type": "back"},
+    "startTime": "2026-02-16T14:28:07.915Z",
+    "endTime": "2026-02-16T14:28:15.456Z",
+    "logs": [
+      "[STDOUT] Starting deployment job...",
+      "[STDERR] Error: Repository my-api already exists"
+    ]
   }
 }
 ```
@@ -137,16 +243,51 @@ Get job status and logs.
 #### GET /api/deploy/:jobId/logs
 Stream logs in real-time using Server-Sent Events (SSE).
 
-**Usage:**
+**Example:**
 ```bash
-curl -N http://localhost:3000/api/deploy/deploy-abc123/logs
+curl -N https://devops-agent-r2d2.johannmoreno.dev/api/deploy/deploy-mlp9rdyj-oz9wv/logs
 ```
 
 **Response (SSE):**
 ```
-data: {"log":"Worker started"}
-data: {"log":"Processing deploy..."}
+data: {"log":"[STDOUT] Worker started"}
+data: {"log":"[STDOUT] Creating GitHub repository..."}
+data: {"log":"[STDOUT] Repository created successfully"}
 data: {"done":true,"status":"succeeded"}
+```
+
+### Job Queue
+
+#### GET /api/jobs
+Get current job queue status.
+
+**Example:**
+```bash
+curl https://devops-agent-r2d2.johannmoreno.dev/api/jobs
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "currentJob": {
+      "jobId": "deploy-abc123",
+      "type": "deploy",
+      "status": "running",
+      "startTime": "2026-02-16T14:28:07.915Z",
+      "request": {"name": "my-app", "type": "front"}
+    },
+    "queuedJobs": [
+      {
+        "jobId": "deploy-xyz789",
+        "type": "deploy",
+        "queuedAt": "2026-02-16T14:30:12.345Z",
+        "request": {"name": "another-app", "type": "back"}
+      }
+    ]
+  }
+}
 ```
 
 ### Testing Endpoints
@@ -154,9 +295,9 @@ data: {"done":true,"status":"succeeded"}
 #### POST /api/test
 POC endpoint that calls GitHub API and returns authenticated user data.
 
-**Request:**
+**Example:**
 ```bash
-curl -X POST http://localhost:3000/api/test
+curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/test
 ```
 
 **Response:**
@@ -166,24 +307,78 @@ curl -X POST http://localhost:3000/api/test
   "message": "GitHub API call successful",
   "data": {
     "user": {
-      "login": "username",
-      "name": "Full Name",
-      "email": "user@example.com",
+      "login": "johanson1988",
+      "name": "Johann Moreno",
+      "email": "johann@example.com",
       "public_repos": 42
     }
   },
-  "timestamp": "2026-02-14T..."
+  "timestamp": "2026-02-16T14:35:22.789Z"
 }
 ```
 
-### GET /api/repos
+#### GET /api/repos
 List recent repositories.
 
-### GET /health
-Health check endpoint (for K8s liveness probe).
+**Example:**
+```bash
+curl https://devops-agent-r2d2.johannmoreno.dev/api/repos
+```
 
-### GET /ready
-Readiness check endpoint (for K8s readiness probe).
+### Health Checks
+
+#### GET /health
+Health check endpoint (for Kubernetes liveness probe).
+
+**Example:**
+```bash
+curl https://devops-agent-r2d2.johannmoreno.dev/health
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-02-16T14:35:22.789Z"
+}
+```
+
+#### GET /ready
+Readiness check endpoint (for Kubernetes readiness probe).
+
+**Example:**
+```bash
+curl https://devops-agent-r2d2.johannmoreno.dev/ready
+```
+
+---
+
+## Testing Your Deployed Apps
+
+After deployment completes (usually takes 2-3 minutes), your apps are accessible via HTTPS:
+
+**Frontend Example:**
+```bash
+# Assuming you deployed: {"name":"my-frontend","type":"front"}
+curl https://my-frontend.johannmoreno.dev
+# Returns: HTML content
+```
+
+**Backend Example:**
+```bash
+# Assuming you deployed: {"name":"my-api","type":"back"}
+curl https://my-api.johannmoreno.dev/health
+# Returns: {"status":"ok","version":"1.0.0"}
+```
+
+**Important Notes:**
+- ✅ All deployed apps use HTTPS only (enforced by Traefik ingress)
+- ✅ Certificates are automatically provisioned by cert-manager via Let's Encrypt
+- ✅ HTTP requests are automatically redirected to HTTPS
+- ✅ DNS is managed by Cloudflare
+- ✅ ArgoCD auto-syncs changes from the `infra-live` repository
+
+---
 
 ## Project Structure
 

@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { DeployRequest } from '../types/job.types';
-import { jobService } from '../services/job.service';
-import { githubService } from '../services/github.service';
+import type { FastifyInstance } from 'fastify';
 import { config } from '../config';
+import { githubService } from '../services/github.service';
+import { jobService } from '../services/job.service';
 
 export async function deployRoutes(fastify: FastifyInstance) {
   // Create deployment job
