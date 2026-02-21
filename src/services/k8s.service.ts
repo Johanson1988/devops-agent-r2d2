@@ -116,7 +116,7 @@ export class KubernetesService {
                     name: 'GITHUB_TOKEN',
                     valueFrom: {
                       secretKeyRef: {
-                        name: 'devops-agent-secrets',
+                        name: 'github-token',
                         key: 'GITHUB_TOKEN',
                       },
                     },
@@ -124,6 +124,19 @@ export class KubernetesService {
                   {
                     name: 'JOB_ID',
                     value: jobId,
+                  },
+                  {
+                    name: 'FORGEBOT_WEBHOOK_URL',
+                    value: 'https://forge-bot.johannmoreno.dev/webhook',
+                  },
+                  {
+                    name: 'FORGEBOT_WEBHOOK_SECRET',
+                    valueFrom: {
+                      secretKeyRef: {
+                        name: 'devops-agent-secrets',
+                        key: 'FORGEBOT_WEBHOOK_SECRET',
+                      },
+                    },
                   },
                 ],
                 resources: {
