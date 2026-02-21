@@ -2,6 +2,17 @@ import * as k8s from '@kubernetes/client-node';
 
 import { config } from '../config';
 
+// Helper function for timestamped logging
+function log(message: string, level: 'info' | 'warn' | 'error' = 'info'): void {
+  const timestamp = new Date().toISOString();
+  const prefix = {
+    info: '✓',
+    warn: '⚠️',
+    error: '❌',
+  }[level];
+  console.log(`[${timestamp}] ${prefix} ${message}`);
+}
+
 export class KubernetesService {
   private k8sApi: k8s.CoreV1Api;
   private batchApi: k8s.BatchV1Api;
@@ -314,11 +325,14 @@ export class KubernetesService {
   /**
    * Create an ArgoCD Application CRD to manage an app's deployment.
    * The Application watches infra-live/apps/<appName> and auto-syncs.
+   * Includes annotations for ArgoCD Notifications webhook integration with Alisios Bot.
    */
   async createArgoCDApplication(
     appName: string,
     repoOwner: string,
   ): Promise<void> {
+    log(`[ArgoCD] Creating Application for "${appName}"`, 'info');
+    
     const application = {
       apiVersion: 'argoproj.io/v1alpha1',
       kind: 'Application',
@@ -327,6 +341,7 @@ export class KubernetesService {
         namespace: 'argocd',
         annotations: {
           // ArgoCD Notifications: subscribe to deploy status triggers via Alisios webhook
+          // These annotations tell ArgoCD Notifications to send webhook events to Alisios Bot
           'notifications.argoproj.io/subscribe.on-deployed.alisios': '',
           'notifications.argoproj.io/subscribe.on-health-degraded.alisios': '',
           'notifications.argoproj.io/subscribe.on-sync-failed.alisios': '',
@@ -370,6 +385,11 @@ export class KubernetesService {
       plural: 'applications',
       body: application,
     });
+
+    // Log confirmation with notification details
+    log(`[ArgoCD] Application "${appName}" created successfully`, 'info');
+    log(`[Notifications] Subscribed to 4 triggers: on-deployed, on-health-degraded, on-sync-failed, on-sync-running`, 'info');
+    log(`[Webhooks] Status updates will be sent to: https://alisios-bot.johannmoreno.dev/webhook/deploy-status`, 'info');
   }
 }
 
