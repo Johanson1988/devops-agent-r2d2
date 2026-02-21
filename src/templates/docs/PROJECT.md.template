@@ -1,0 +1,54 @@
+# {{name}}
+
+## Descripción
+{{description}}
+
+## Stack tecnológico
+{{#if_front}}
+- Frontend: HTML5, CSS3
+- Servidor: nginx 1.25 (Alpine)
+- Contenedor: Docker
+- Orquestación: Kubernetes + ArgoCD
+{{/if_front}}
+{{#if_back}}
+- Backend: Node.js + Express
+- Lenguaje: TypeScript
+- Contenedor: Docker (node:22-alpine)
+- Orquestación: Kubernetes + ArgoCD
+{{/if_back}}
+
+## Infraestructura
+- CI/CD: GitHub Actions (build → push GHCR → update infra-live)
+- Registry: GitHub Container Registry (GHCR)
+- Cluster: Kubernetes con ArgoCD auto-sync
+- Ingress: Traefik + cert-manager (Let's Encrypt)
+- Dominio: `{{domain}}`
+
+## Estructura del proyecto
+{{#if_front}}
+```
+├── src/
+│   ├── index.html        # Página principal
+│   └── nginx.conf        # Configuración nginx
+├── Dockerfile            # Build de producción
+├── .github/workflows/    # CI/CD pipeline
+└── README.md
+```
+{{/if_front}}
+{{#if_back}}
+```
+├── src/
+│   └── index.ts          # API Express con /health
+├── package.json          # Dependencias
+├── tsconfig.json         # Config TypeScript
+├── Dockerfile            # Build de producción
+├── .github/workflows/    # CI/CD pipeline
+└── README.md
+```
+{{/if_back}}
+
+## Convenciones
+- Idioma del código: inglés
+- Commits: Conventional Commits (`feat:`, `fix:`, `chore:`)
+- Ramas: `main` (producción)
+- Despliegue: automático vía GitOps (push → build → ArgoCD sync)

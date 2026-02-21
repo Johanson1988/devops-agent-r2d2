@@ -165,6 +165,64 @@ export class GitHubService {
       throw new Error(`Failed to create secret ${secretName}: ${error.message}`);
     }
   }
+
+  /**
+   * Create a webhook on a repository.
+   */
+  async createWebhook(
+    owner: string,
+    repo: string,
+    url: string,
+    secret: string,
+    events: string[] = ['pull_request', 'issues'],
+  ): Promise<void> {
+    try {
+      await this.octokit.repos.createWebhook({
+        owner,
+        repo,
+        config: {
+          url,
+          content_type: 'json',
+          secret,
+          insecure_ssl: '0',
+        },
+        events,
+        active: true,
+      });
+    } catch (error: any) {
+      console.error('GitHub API error creating webhook:', error);
+      throw new Error(`Failed to create webhook: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create a label on a repository.
+   */
+  async createLabel(
+    owner: string,
+    repo: string,
+    name: string,
+    color: string,
+    description?: string,
+  ): Promise<void> {
+    try {
+      await this.octokit.issues.createLabel({
+        owner,
+        repo,
+        name,
+        color,
+        description,
+      });
+    } catch (error: any) {
+      // If label already exists (422), that's fine
+      if (error.status === 422) {
+        console.log(`Label "${name}" already exists on ${owner}/${repo}`);
+        return;
+      }
+      console.error('GitHub API error creating label:', error);
+      throw new Error(`Failed to create label ${name}: ${error.message}`);
+    }
+  }
 }
 
 // Singleton instance

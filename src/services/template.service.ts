@@ -93,7 +93,37 @@ export class TemplateService {
       result = result.replace(/\{\{#if port\}\}([^]*?)\{\{\/if\}\}/g, '');
     }
 
+    // Handle type-based conditional blocks {{#if_front}}...{{/if_front}} and {{#if_back}}...{{/if_back}}
+    const isFront = variables.type === 'front' || !variables.type;
+    const isBack = variables.type === 'back';
+
+    if (isFront) {
+      result = result.replace(/\{\{#if_front\}\}([^]*?)\{\{\/if_front\}\}/g, (_, content) => content);
+    } else {
+      result = result.replace(/\{\{#if_front\}\}([^]*?)\{\{\/if_front\}\}/g, '');
+    }
+
+    if (isBack) {
+      result = result.replace(/\{\{#if_back\}\}([^]*?)\{\{\/if_back\}\}/g, (_, content) => content);
+    } else {
+      result = result.replace(/\{\{#if_back\}\}([^]*?)\{\{\/if_back\}\}/g, '');
+    }
+
     return result;
+  }
+
+  /**
+   * Generate docs/PROJECT.md for ForgeBot integration
+   */
+  generateProjectMd(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'docs/PROJECT.md.template');
+      let template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating PROJECT.md:', error);
+      throw new Error('Failed to generate PROJECT.md');
+    }
   }
 
   /**

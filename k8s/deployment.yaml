@@ -75,6 +75,7 @@ data:
   LOG_LEVEL: "info"
   WORKER_IMAGE: "ghcr.io/johanson1988/devops-agent-r2d2:latest"
   INFRA_DOMAIN: "johannmoreno.dev"
+  FORGEBOT_WEBHOOK_URL: "https://forge-bot.johannmoreno.dev/webhook"
 
 ---
 apiVersion: apps/v1
@@ -110,6 +111,11 @@ spec:
             secretKeyRef:
               name: devops-agent-secrets
               key: GITHUB_TOKEN
+        - name: FORGEBOT_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: devops-agent-secrets
+              key: FORGEBOT_WEBHOOK_SECRET
         envFrom:
         - configMapRef:
             name: devops-agent-config

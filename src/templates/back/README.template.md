@@ -19,4 +19,4 @@ npm start
 
 ## Health Check
 
-GET `/health` → `{ status: "ok", version: "1.0.0", timestamp: "2026-02-18T..." }`
+GET `/health` → `{ status: "ok", version: "0.0.1", timestamp: "2026-02-18T..." }`

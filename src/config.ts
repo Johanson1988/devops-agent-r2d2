@@ -18,6 +18,10 @@ interface Config {
   infra: {
     domain: string;
   };
+  forgebot: {
+    webhookUrl: string;
+    webhookSecret: string;
+  };
   env: string;
   logLevel: string;
 }
@@ -43,6 +47,10 @@ export const config: Config = {
   },
   infra: {
     domain: getEnvVar('INFRA_DOMAIN', 'johannmoreno.dev'),
+  },
+  forgebot: {
+    webhookUrl: getEnvVar('FORGEBOT_WEBHOOK_URL', 'https://forge-bot.johannmoreno.dev/webhook'),
+    webhookSecret: getEnvVar('FORGEBOT_WEBHOOK_SECRET', ''),
   },
   env: getEnvVar('NODE_ENV', 'development'),
   logLevel: getEnvVar('LOG_LEVEL', 'info'),

@@ -97,6 +97,7 @@ async function main() {
 
     const readmeContent = templateService.generateReadme(variables);
     const gitignoreContent = templateService.generateGitignore();
+    const projectMdContent = templateService.generateProjectMd(variables);
 
     // Step 4: Generate project-specific files based on type
     console.log('Step 4: Generating project files...');
@@ -152,6 +153,15 @@ async function main() {
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), gitignoreContent);
       console.log('   ✓ .gitignore creado');
 
+      // Create docs/PROJECT.md (ForgeBot integration)
+      console.log('📄 Creando docs/PROJECT.md...');
+      const docsDir = path.join(tmpDir, 'docs');
+      if (!fs.existsSync(docsDir)) {
+        fs.mkdirSync(docsDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(docsDir, 'PROJECT.md'), projectMdContent);
+      console.log('   ✓ docs/PROJECT.md creado');
+
       // Create all project files
       console.log(`📦 Creando ${Object.keys(projectFiles).length} archivos del proyecto...`);
       for (const [filePath, content] of Object.entries(projectFiles)) {
@@ -203,6 +213,36 @@ async function main() {
       githubToken,
     );
     console.log('✓ Secreto INFRA_PAT creado en el repositorio');
+    console.log('');
+
+    // Step 6b: Create ForgeBot webhook
+    console.log('Step 6b: Creando webhook de ForgeBot...');
+    const forgebotWebhookUrl = process.env.FORGEBOT_WEBHOOK_URL || 'https://forge-bot.johannmoreno.dev/webhook';
+    const forgebotWebhookSecret = process.env.FORGEBOT_WEBHOOK_SECRET || '';
+    if (forgebotWebhookSecret) {
+      await githubService.createWebhook(
+        jobData.repoOwner,
+        repoSlug,
+        forgebotWebhookUrl,
+        forgebotWebhookSecret,
+        ['pull_request', 'issues'],
+      );
+      console.log(`✓ Webhook creado: ${forgebotWebhookUrl}`);
+    } else {
+      console.log('⚠️  FORGEBOT_WEBHOOK_SECRET no configurado, saltando creación de webhook');
+    }
+    console.log('');
+
+    // Step 6c: Create ForgeBot label
+    console.log('Step 6c: Creando label forgebot...');
+    await githubService.createLabel(
+      jobData.repoOwner,
+      repoSlug,
+      'forgebot',
+      '6f42c1',
+      'Activa la orquestación de ForgeBot',
+    );
+    console.log('✓ Label "forgebot" creada');
     console.log('');
 
     // Step 7: Clone infra-live and create Kubernetes manifests
