@@ -44,7 +44,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
   });
 
   // Health check (importante para K8s)
-  fastify.get('/health', async () => {
+  fastify.get('/health', { logLevel: 'silent' }, async () => {
     return {
       status: 'healthy',
       version: packageJson.version,
@@ -54,7 +54,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
   });
 
   // Readiness check (K8s readiness probe)
-  fastify.get('/ready', async (_request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get('/ready', { logLevel: 'silent' }, async (_request: FastifyRequest, reply: FastifyReply) => {
     try {
       // Verificar que GitHub API está accesible
       await githubService.getAuthenticatedUser();
