@@ -325,6 +325,13 @@ export class KubernetesService {
       metadata: {
         name: appName,
         namespace: 'argocd',
+        annotations: {
+          // ArgoCD Notifications: subscribe to deploy status triggers via Alisios webhook
+          'notifications.argoproj.io/subscribe.on-deployed.alisios': '',
+          'notifications.argoproj.io/subscribe.on-health-degraded.alisios': '',
+          'notifications.argoproj.io/subscribe.on-sync-failed.alisios': '',
+          'notifications.argoproj.io/subscribe.on-sync-running.alisios': '',
+        },
       },
       spec: {
         project: 'default',

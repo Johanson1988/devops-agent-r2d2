@@ -149,6 +149,60 @@ El Dockerfile implementa las siguientes mejoras de seguridad:
 - ✅ Health checks configurados
 - ✅ Variables de entorno explícitas
 
+## ArgoCD Notifications (Alisios Bot)
+
+El agente configura automáticamente ArgoCD Notifications para enviar el estado
+de cada despliegue al webhook de [Alisios Bot](https://alisios-bot.johannmoreno.dev).
+
+### Instalación (una sola vez en el cluster)
+
+```bash
+# 1. Instalar el controlador de notificaciones de ArgoCD (si no está instalado)
+kubectl apply -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
+
+# 2. Crear el secret con el token del webhook
+kubectl -n argocd create secret generic argocd-notifications-secret \
+  --from-literal=webhook-secret=<TU_ALISIOS_WEBHOOK_SECRET>
+
+# 3. Aplicar la configuración de triggers y templates
+kubectl apply -f k8s/argocd-notifications.yaml
+```
+
+### Cómo funciona
+
+Cada ArgoCD Application creada por el agente incluye estas annotations:
+
+```yaml
+annotations:
+  notifications.argoproj.io/subscribe.on-deployed.alisios: ""
+  notifications.argoproj.io/subscribe.on-health-degraded.alisios: ""
+  notifications.argoproj.io/subscribe.on-sync-failed.alisios: ""
+  notifications.argoproj.io/subscribe.on-sync-running.alisios: ""
+```
+
+Esto hace que ArgoCD envíe un `POST /webhook/deploy-status` a Alisios Bot cuando:
+
+| Trigger               | Cuándo se dispara                        | Status enviado  |
+|------------------------|------------------------------------------|-----------------|
+| `on-deployed`          | Sync completado + app Healthy            | `success`       |
+| `on-health-degraded`   | Health status pasa a Degraded            | `failed`        |
+| `on-sync-failed`       | Sync falla (Error/Failed)                | `failed`        |
+| `on-sync-running`      | Sync en progreso                         | `in-progress`   |
+
+### Verificar que funciona
+
+```bash
+# Ver logs del controlador de notificaciones
+kubectl logs -n argocd -l app.kubernetes.io/name=argocd-notifications-controller
+
+# Ver ConfigMap aplicado
+kubectl get configmap argocd-notifications-cm -n argocd -o yaml
+
+# Ver annotations de una app
+kubectl get application <app-name> -n argocd -o jsonpath='{.metadata.annotations}'
+```
+
 ## Troubleshooting
 
 ### Error: ImagePullBackOff

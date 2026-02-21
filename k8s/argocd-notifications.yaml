@@ -1,0 +1,112 @@
+---
+# ArgoCD Notifications - Webhook configuration for Alisios Bot
+# This ConfigMap configures ArgoCD to send deploy status notifications
+# via webhook to the Alisios Bot endpoint.
+#
+# Prerequisites:
+#   - ArgoCD Notifications controller installed:
+#     kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
+#
+# Apply:
+#   kubectl apply -f argocd-notifications.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  # --- Webhook service ---
+  service.webhook.alisios: |
+    url: https://alisios-bot.johannmoreno.dev
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: X-Webhook-Secret
+        value: $webhook-secret
+
+  # --- Templates ---
+  template.deploy-status-success: |
+    webhook:
+      alisios:
+        method: POST
+        path: /webhook/deploy-status
+        body: |
+          {
+            "name": "{{.app.metadata.name}}",
+            "namespace": "{{.app.spec.destination.namespace}}",
+            "status": "success",
+            "version": "{{index .app.status.summary.images 0}}",
+            "message": "Aplicación sincronizada y healthy"
+          }
+
+  template.deploy-status-failed: |
+    webhook:
+      alisios:
+        method: POST
+        path: /webhook/deploy-status
+        body: |
+          {
+            "name": "{{.app.metadata.name}}",
+            "namespace": "{{.app.spec.destination.namespace}}",
+            "status": "failed",
+            "version": "{{index .app.status.summary.images 0}}",
+            "message": "{{.app.status.conditions | first | default \"Sync/health failed\" }}"
+          }
+
+  template.deploy-status-in-progress: |
+    webhook:
+      alisios:
+        method: POST
+        path: /webhook/deploy-status
+        body: |
+          {
+            "name": "{{.app.metadata.name}}",
+            "namespace": "{{.app.spec.destination.namespace}}",
+            "status": "in-progress",
+            "version": "{{index .app.status.summary.images 0}}",
+            "message": "Sincronización en progreso"
+          }
+
+  # --- Triggers ---
+  trigger.on-deployed: |
+    - description: Application is synced and healthy
+      send:
+        - deploy-status-success
+      when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+
+  trigger.on-health-degraded: |
+    - description: Application health has degraded
+      send:
+        - deploy-status-failed
+      when: app.status.health.status == 'Degraded'
+
+  trigger.on-sync-failed: |
+    - description: Application sync has failed
+      send:
+        - deploy-status-failed
+      when: app.status.operationState.phase in ['Error', 'Failed']
+
+  trigger.on-sync-running: |
+    - description: Application sync is running
+      send:
+        - deploy-status-in-progress
+      when: app.status.operationState.phase in ['Running']
+
+---
+# Secret for the webhook authentication
+# The key "webhook-secret" is referenced in the service config above as $webhook-secret
+# 
+# Create it with:
+#   kubectl -n argocd create secret generic argocd-notifications-secret \
+#     --from-literal=webhook-secret=<YOUR_ALISIOS_WEBHOOK_SECRET>
+#
+# Or apply this manifest after replacing the placeholder:
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-notifications-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  webhook-secret: "REPLACE_WITH_ALISIOS_WEBHOOK_SECRET"
