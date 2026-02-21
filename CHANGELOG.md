@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-02-21
+
+### Added
+- **Webhook debugging tools**:
+  - `scripts/monitor-alisios-webhook.sh`: Monitor ArgoCD Notifications controller logs with timestamps
+  - `scripts/test-webhook.sh`: Manual webhook test tool for Alisios Bot endpoint
+  - `scripts/patch-notifications-all-apps.sh`: Patch all ArgoCD Applications with notification annotations
+- **Documentation**:
+  - `docs/WEBHOOK-DEBUG.md`: Complete webhook debugging guide
+  - `docs/WEBHOOK-FIX.md`: Problem description and solution status
+
+### Fixed
+- **Notification delivery**: Existing ArgoCD Applications weren't sending webhooks due to missing notification subscription annotations
+  - All 14 existing applications patched with notification annotations
+  - New applications created by the agent automatically include annotations
+- **Logging**: Added timestamped logging (ISO 8601) in k8s.service.ts with emoji status indicators (✓, ⚠️, ❌)
+- **Webhook verification**: Confirmed HTTP 200 response from Alisios Bot endpoint with proper secret authentication
+
 ## [0.7.0] - 2026-02-21
 
 ### Added
