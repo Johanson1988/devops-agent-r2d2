@@ -131,18 +131,18 @@ spec:
           httpGet:
             path: /health
             port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /ready
             port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 2
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
 
 ---
 apiVersion: v1
