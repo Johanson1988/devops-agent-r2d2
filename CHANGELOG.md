@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-21
+
+### Added
+- **ArgoCD Notifications integration**: Deploy status notifications via webhook to Alisios Bot
+  - ConfigMap with webhook service, triggers (`on-deployed`, `on-sync-failed`, `on-health-degraded`, `on-sync-running`) and templates
+  - ArgoCD Applications created by the agent now include notification subscription annotations automatically
+  - Setup documentation in `docs/CI-CD-SETUP.md`
+- **CHANGELOG templates**: Both frontend and backend generated repos now include a `CHANGELOG.md`
+- **ForgeBot integration on new repos**: Webhook and `forgebot` label created automatically on generated repositories
+- **`docs/PROJECT.md` generation**: New repos include a ForgeBot-compatible project metadata file
+
+### Changed
+- **Backend templates migrated to TypeScript**: `index.js` → `src/index.ts` with typed Express handlers
+  - Added `tsconfig.json` template with strict mode
+  - Updated `package.json` with TypeScript dependencies (`typescript`, `ts-node`, `@types/express`, `@types/node`)
+  - Dockerfile now uses multi-stage build for TypeScript compilation
+  - README updated with `npm run dev` / `npm run build` instructions
+- Template service updated to generate `CHANGELOG.md`, `tsconfig.json`, and `src/index.ts`
+
+### Fixed
+- Go template parse error in ArgoCD notification failed template (escaped quotes)
+- Express server listening on `0.0.0.0` for K8s pod accessibility
+- Image name normalized to lowercase in backend GitHub Actions workflow
+- Backend deployment configuration corrections
+
 ## [0.6.0] - 2026-02-16
 
 ### Added
