@@ -80,10 +80,23 @@ kubectl logs -f deployment/devops-agent-r2d2
 # Port forward for testing
 kubectl port-forward svc/devops-agent-r2d2 3000:80
 
-# Create a deployment job
-curl -X POST http://localhost:3000/api/deploy \
+# Create a frontend deployment (production)
+curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
   -H "Content-Type: application/json" \
-  -d '{"name":"my-app","type":"static"}'
+  -d '{
+    "name": "my-frontend",
+    "type": "front",
+    "description": "Mi frontend de ejemplo"
+  }'
+
+# Create a backend deployment (production)
+curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "mi-api",
+    "type": "back",
+    "description": "Mi backend de ejemplo"
+  }'
 
 # Watch the Kubernetes Job being created
 kubectl get jobs -w
