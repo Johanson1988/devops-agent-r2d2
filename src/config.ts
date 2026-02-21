@@ -20,15 +20,15 @@ interface Config {
   };
   forgebot: {
     webhookUrl: string;
-    webhookSecret: string;
+    webhookSecret: string; // Can be empty if ForgeBot not configured
   };
   env: string;
   logLevel: string;
 }
 
 function getEnvVar(key: string, defaultValue?: string): string {
-  const value = process.env[key] || defaultValue;
-  if (!value) {
+  const value = process.env[key] ?? defaultValue;
+  if (value === undefined) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;
