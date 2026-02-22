@@ -93,9 +93,10 @@ export class TemplateService {
       result = result.replace(/\{\{#if port\}\}([^]*?)\{\{\/if\}\}/g, '');
     }
 
-    // Handle type-based conditional blocks {{#if_front}}...{{/if_front}} and {{#if_back}}...{{/if_back}}
+    // Handle type-based conditional blocks
     const isFront = variables.type === 'front' || !variables.type;
     const isBack = variables.type === 'back';
+    const isRemix = variables.type === 'remix';
 
     if (isFront) {
       result = result.replace(/\{\{#if_front\}\}([^]*?)\{\{\/if_front\}\}/g, (_, content) => content);
@@ -107,6 +108,12 @@ export class TemplateService {
       result = result.replace(/\{\{#if_back\}\}([^]*?)\{\{\/if_back\}\}/g, (_, content) => content);
     } else {
       result = result.replace(/\{\{#if_back\}\}([^]*?)\{\{\/if_back\}\}/g, '');
+    }
+
+    if (isRemix) {
+      result = result.replace(/\{\{#if_remix\}\}([^]*?)\{\{\/if_remix\}\}/g, (_, content) => content);
+    } else {
+      result = result.replace(/\{\{#if_remix\}\}([^]*?)\{\{\/if_remix\}\}/g, '');
     }
 
     return result;
@@ -170,6 +177,29 @@ export class TemplateService {
       'README.md': this.generateBackendReadme(variables),
       'CHANGELOG.md': this.generateBackendChangelog(variables),
     };
+  }
+
+  /**
+   * Generate remix-specific files (only the CI workflow — all other
+   * files come directly from the remix-pod-starter repo clone).
+   */
+  generateRemixFiles(variables: TemplateVariables): {
+    '.github/workflows/build.yml': string;
+  } {
+    return {
+      '.github/workflows/build.yml': this.generateRemixWorkflow(variables),
+    };
+  }
+
+  private generateRemixWorkflow(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'remix/build-workflow.yml.template');
+      const template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating remix workflow:', error);
+      throw new Error('Failed to generate remix workflow');
+    }
   }
 
   /**

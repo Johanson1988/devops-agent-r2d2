@@ -5,7 +5,7 @@ export interface DeployRequest {
   repoSlug?: string;  // Default: name
   
   // Configuración del deployment
-  type?: 'front' | 'back';  // Default: 'front'
+  type?: 'front' | 'back' | 'remix';  // Default: 'front'
   branch?: string;     // Default: 'main'
   path?: string;       // Default: 'k8s'
   environment?: string;  // dev, staging, prod

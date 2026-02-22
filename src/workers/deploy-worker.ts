@@ -70,8 +70,8 @@ async function main() {
 
     // Check if type is supported
 
-    if (deploymentType !== 'front' && deploymentType !== 'back') {
-      throw new Error(`Unknown deployment type: ${deploymentType}. Supported types: front, back`);
+    if (deploymentType !== 'front' && deploymentType !== 'back' && deploymentType !== 'remix') {
+      throw new Error(`Unknown deployment type: ${deploymentType}. Supported types: front, back, remix`);
     }
 
     // Step 3: Generate initial content
@@ -91,8 +91,8 @@ async function main() {
       path: jobData.path || 'k8s',
       timestamp,
       // Set container port and health path based on deployment type
-      containerPort: deploymentType === 'back' ? 3000 : 80,
-      healthPath: deploymentType === 'back' ? '/health' : '/',
+      containerPort: deploymentType === 'back' || deploymentType === 'remix' ? 3000 : 80,
+      healthPath: deploymentType === 'back' ? '/health' : deploymentType === 'remix' ? '/healthz' : '/',
     };
 
     const readmeContent = templateService.generateReadme(variables);
@@ -121,6 +121,14 @@ async function main() {
         const size = projectFiles[filePath].length;
         console.log(`   - ${filePath} (${size} bytes)`);
       });
+    } else if (deploymentType === 'remix') {
+      console.log('📦 Generando archivos para remix (basado en remix-pod-starter)...');
+      projectFiles = templateService.generateRemixFiles(variables);
+      console.log(`✓ Generated ${Object.keys(projectFiles).length} remix files (workflow only — app files come from starter)`);
+      Object.keys(projectFiles).forEach(filePath => {
+        const size = projectFiles[filePath].length;
+        console.log(`   - ${filePath} (${size} bytes)`);
+      });
     }
 
     // Step 5: Clone repo locally, create files, and push
@@ -132,26 +140,43 @@ async function main() {
     console.log(`📁 Directorio temporal: ${tmpDir}`);
     
     try {
-      // Clone the repository
-      console.log(`📥 Clonando repositorio...`);
       const cloneUrl = result.repo.clone_url.replace('https://', `https://${process.env.GITHUB_TOKEN}@`);
-      execSync(`git clone ${cloneUrl} ${tmpDir}`, { stdio: 'inherit' });
-      console.log('✓ Repositorio clonado');
+
+      if (deploymentType === 'remix') {
+        // Clone the starter repo and repoint to the new repo
+        const REMIX_STARTER_REPO = 'Johanson1988/remix-pod-starter';
+        const starterCloneUrl = `https://${process.env.GITHUB_TOKEN}@github.com/${REMIX_STARTER_REPO}.git`;
+        console.log(`📥 Clonando remix-pod-starter...`);
+        execSync(`git clone ${starterCloneUrl} ${tmpDir}`, { stdio: 'inherit' });
+        console.log('✓ remix-pod-starter clonado');
+        // Strip the starter git history - start fresh
+        fs.rmSync(path.join(tmpDir, '.git'), { recursive: true, force: true });
+        execSync('git init', { cwd: tmpDir });
+        execSync('git symbolic-ref HEAD refs/heads/main', { cwd: tmpDir });
+        execSync(`git remote add origin ${cloneUrl}`, { cwd: tmpDir });
+      } else {
+        // Clone the new empty repo
+        console.log(`📥 Clonando repositorio...`);
+        execSync(`git clone ${cloneUrl} ${tmpDir}`, { stdio: 'inherit' });
+        console.log('✓ Repositorio clonado');
+      }
       console.log('');
 
       // Configure git
       execSync('git config user.name "DevOps Agent R2D2"', { cwd: tmpDir });
       execSync('git config user.email "devops-agent@example.com"', { cwd: tmpDir });
 
-      // Create README.md
-      console.log('📄 Creando README.md...');
-      fs.writeFileSync(path.join(tmpDir, 'README.md'), readmeContent);
-      console.log('   ✓ README.md creado');
+      if (deploymentType !== 'remix') {
+        // Create README.md (not needed for remix — starter has its own)
+        console.log('📄 Creando README.md...');
+        fs.writeFileSync(path.join(tmpDir, 'README.md'), readmeContent);
+        console.log('   ✓ README.md creado');
 
-      // Create .gitignore
-      console.log('📄 Creando .gitignore...');
-      fs.writeFileSync(path.join(tmpDir, '.gitignore'), gitignoreContent);
-      console.log('   ✓ .gitignore creado');
+        // Create .gitignore (not needed for remix — starter has its own)
+        console.log('📄 Creando .gitignore...');
+        fs.writeFileSync(path.join(tmpDir, '.gitignore'), gitignoreContent);
+        console.log('   ✓ .gitignore creado');
+      }
 
       // Create docs/PROJECT.md (ForgeBot integration)
       console.log('📄 Creando docs/PROJECT.md...');
