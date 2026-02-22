@@ -9,9 +9,10 @@ GitOps automation agent for Kubernetes deployments with ArgoCD.
 - 🚀 **One-Click Deployments**: Create frontend or backend apps with a single API call
 - 📦 **Full GitOps Pipeline**: Auto-creates GitHub repos, CI/CD workflows, K8s manifests, and ArgoCD apps
 - 🔄 **Auto-Sync**: GitHub Actions builds and pushes to GHCR, ArgoCD syncs automatically
-- 🎯 **Two Deployment Types**:
+- 🎯 **Three Deployment Types**:
   - **Frontend** (`type: "front"`): Static HTML + nginx
   - **Backend** (`type: "back"`): Node.js Express API with `/health` endpoint
+  - **Remix** (`type: "remix"`): Full-stack Remix/React Router v7 app cloned from `remix-pod-starter`
 - 🔐 **Secure**: Auto-configures GitHub secrets and imagePullSecrets
 - 📊 **Observable**: Real-time logs via Server-Sent Events
 
@@ -153,9 +154,21 @@ curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
   }'
 ```
 
+**Remix Deployment:**
+```bash
+curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "my-remix-app",
+    "type": "remix",
+    "description": "My full-stack Remix app",
+    "domain": "my-remix-app.johannmoreno.dev"
+  }'
+```
+
 **Parameters:**
 - `name` (required): App name (becomes repo name and domain subdomain)
-- `type` (required): `"front"` for frontend (HTML+nginx) or `"back"` for backend (Express API)
+- `type` (required): `"front"` | `"back"` | `"remix"`
 - `description` (optional): Repository description
 - `domain` (optional): Custom domain (defaults to `<name>.johannmoreno.dev`)
 - `repoOwner` (optional): GitHub username (auto-detected from token if not provided)
@@ -181,9 +194,17 @@ curl -X POST https://devops-agent-r2d2.johannmoreno.dev/api/deploy \
 - ✅ Live at: `https://<name>.johannmoreno.dev`
 
 *Backend (type: "back"):*
-- ✅ GitHub repo with: `index.js`, `package.json`, `Dockerfile`, GitHub Actions workflow
+- ✅ GitHub repo with: `src/index.ts`, `package.json`, `tsconfig.json`, `Dockerfile`, GitHub Actions workflow
 - ✅ Express API with `/health` endpoint on port 3000
 - ✅ Live at: `https://<name>.johannmoreno.dev/health`
+
+*Remix (type: "remix"):*
+- ✅ GitHub repo cloned directly from [`remix-pod-starter`](https://github.com/Johanson1988/remix-pod-starter)
+- ✅ React Router v7 (Remix) + TypeScript + Tailwind CSS + shadcn/ui
+- ✅ Built-in: i18n (es/en), SEO, light/dark theme, a11y, `/healthz` endpoint
+- ✅ Activatable features: Database (Prisma), MDX Blog, additional locales
+- ✅ Env vars injected: `APP_URL`, `APP_NAME`
+- ✅ Live at: `https://<name>.johannmoreno.dev`
 
 #### GET /api/deploy/:jobId
 Get job status and logs.
@@ -382,6 +403,17 @@ curl https://my-frontend.johannmoreno.dev
 # Assuming you deployed: {"name":"my-api","type":"back"}
 curl https://my-api.johannmoreno.dev/health
 # Returns: {"status":"ok","version":"1.0.0"}
+```
+
+**Remix Example:**
+```bash
+# Assuming you deployed: {"name":"my-remix-app","type":"remix"}
+curl https://my-remix-app.johannmoreno.dev/healthz
+# Returns: {"status":"ok"}
+
+# The full app is live at:
+curl https://my-remix-app.johannmoreno.dev
+# Returns: SSR HTML page with Tailwind + i18n
 ```
 
 **Important Notes:**
