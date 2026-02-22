@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-02-22
+
+### Added
+- **Remix deployment type** (`type: "remix"`): Deploy full-stack Remix/React Router v7 applications
+  - Clones [remix-pod-starter](https://github.com/Johanson1988/remix-pod-starter) directly (TypeScript, Tailwind, shadcn/ui, i18n, SEO, a11y)
+  - Auto-generates GitHub Actions workflow with correct Docker path (`docker/Dockerfile`)
+  - Injects env vars: `APP_URL`, `APP_NAME`
+  - Health endpoint: `/healthz` on port 3000
+  - Activatable features: Database (Prisma), MDX blog, additional locales
+- **ForgeBot GitHub webhook creation**: Deploy worker now creates GitHub webhooks on new repositories automatically
+  - Endpoint: `https://forge-bot.johannmoreno.dev/webhook`
+  - Events: `pull_request`, `issues`
+  - Secret properly configured from K8s secret
+
+### Changed
+- **Deploy worker improvements**:
+  - Job pods now receive `FORGEBOT_WEBHOOK_URL` and `FORGEBOT_WEBHOOK_SECRET` environment variables
+  - Fixed `GITHUB_TOKEN` secret reference in Job spec (was pointing to wrong secret)
+  - Remix deployment skips README/gitignore creation (handled by starter template)
+- **Kubernetes deployment probes**:
+  - Increased `initialDelaySeconds`: 30 (from 5-10) allows app time to initialize
+  - Fixed missing `timeoutSeconds`: 10 (was defaulting to 1s, causing deadline exceeded errors)
+  - Updated `periodSeconds`: 10-15 (was 5-10) reduces probe frequency
+  - Increased `failureThreshold`: 3 (was 2) more lenient on startup
+- **Health check logging**: Route-level log silencing for `/health` and `/ready` probes reduces noise
+  - Fastify: Uses `{ logLevel: 'silent' }` route option (proper per-route suppression)
+
+### Fixed
+- **Webhook creation**: Worker was silently skipping webhook creation when `FORGEBOT_WEBHOOK_SECRET` was not configured
+- **Probe timeout errors**: "context deadline exceeded" and "connection refused" errors on readiness probes
+- **Log spam**: Kubernetes probes were filling logs with JSON GET requests every 10-15 seconds
+- **CrashLoopBackOff**: Fixed environment variable handling in config service using nullish coalescing (`??`) instead of logical OR (`||`)
+- **Secret management**: Separated ForgeBot webhook secret from Alisios Bot ArgoCD notification secret in K8s clusters
+
+### Security
+- All deployment types now have proper webhook secret validation
+- ForgeBot webhook secret is stored in K8s secret (not hardcoded)
+- Pod containers run as non-root user (K8s best practices)
+
 ## [0.7.1] - 2026-02-21
 
 ### Added
