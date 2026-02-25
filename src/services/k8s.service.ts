@@ -141,7 +141,7 @@ export class KubernetesService {
                 ],
                 resources: {
                   requests: {
-                    cpu: '100m',
+                    cpu: '50m',
                     memory: '128Mi',
                   },
                   limits: {
