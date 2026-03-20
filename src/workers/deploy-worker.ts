@@ -64,8 +64,8 @@ async function main() {
     });
     console.log(`✓ Repository created: ${result.repo.html_url}`);
 
-    // Determine deployment type (default to 'front')
-    const deploymentType = jobData.type || 'front';
+    // Determine deployment type (default to 'front'). Normalize 'api' → 'back'
+    const deploymentType = jobData.type === 'api' ? 'back' : (jobData.type || 'front');
     console.log(`Deployment type: ${deploymentType}`);
 
     // Check if type is supported

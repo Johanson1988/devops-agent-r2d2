@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`api` deployment type**: Accepted as alias for `back`, enabling compatibility with alisios-bot which sends `type: "api"` for backend deployments
+  - Normalized to `back` in the deploy worker before any processing
+  - No behavior difference — generates the same Node.js/Express project
+
 ## [1.0.0] - 2026-02-22
 
 ### Added
