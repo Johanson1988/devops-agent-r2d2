@@ -18,7 +18,9 @@ export class KubernetesService {
   private batchApi: k8s.BatchV1Api;
   private customApi: k8s.CustomObjectsApi;
   private kc: k8s.KubeConfig;
-  private namespace: string = 'default';
+  // Read own namespace from Downward API (env injected via fieldRef
+  // metadata.namespace). Falls back to 'default' for local dev.
+  private namespace: string = process.env.POD_NAMESPACE || 'default';
   private workerImage: string;
 
   constructor() {
@@ -127,7 +129,7 @@ export class KubernetesService {
                   },
                   {
                     name: 'FORGEBOT_WEBHOOK_URL',
-                    value: 'https://forge-bot.johannmoreno.dev/webhook',
+                    value: 'http://forge-bot.bots.svc.cluster.local/webhook',
                   },
                   {
                     name: 'FORGEBOT_WEBHOOK_SECRET',
@@ -336,6 +338,18 @@ export class KubernetesService {
   }
 
   /**
+   * Map an app type to the target namespace where it should be deployed.
+   * Post-migration ns scheme: bots/webs/tools.
+   * - api/bot apps → bots
+   * - remix/web apps → webs
+   * - everything else → webs (safer default)
+   */
+  private resolveTargetNamespace(appType?: string): string {
+    if (appType === 'api' || appType === 'bot') return 'bots';
+    return 'webs';
+  }
+
+  /**
    * Create an ArgoCD Application CRD to manage an app's deployment.
    * The Application watches infra-live/apps/<appName> and auto-syncs.
    * Includes annotations for ArgoCD Notifications webhook integration with Alisios Bot.
@@ -343,9 +357,11 @@ export class KubernetesService {
   async createArgoCDApplication(
     appName: string,
     repoOwner: string,
+    appType?: string,
   ): Promise<void> {
-    log(`[ArgoCD] Creating Application for "${appName}"`, 'info');
-    
+    const targetNs = this.resolveTargetNamespace(appType);
+    log(`[ArgoCD] Creating Application for "${appName}" → ns ${targetNs}`, 'info');
+
     const application = {
       apiVersion: 'argoproj.io/v1alpha1',
       kind: 'Application',
@@ -370,7 +386,7 @@ export class KubernetesService {
         },
         destination: {
           server: 'https://kubernetes.default.svc',
-          namespace: 'default',
+          namespace: targetNs,
         },
         syncPolicy: {
           automated: {

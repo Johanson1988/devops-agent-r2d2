@@ -334,7 +334,7 @@ async function main() {
     console.log('Step 8: Creando ArgoCD Application...');
     try {
       const k8sService = new KubernetesService();
-      await k8sService.createArgoCDApplication(jobData.name, jobData.repoOwner);
+      await k8sService.createArgoCDApplication(jobData.name, jobData.repoOwner, jobData.type);
       console.log(`✓ ArgoCD Application "${jobData.name}" creada`);
     } catch (error: any) {
       // If it already exists (409 Conflict), that's fine
