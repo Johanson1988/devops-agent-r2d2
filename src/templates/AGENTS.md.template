@@ -1,0 +1,74 @@
+# AGENTS.md — Singularidades del proyecto ({{name}})
+
+> **Único archivo de instrucciones**. Léelo antes de cambiar nada.
+> `CLAUDE.md` y `.github/copilot-instructions.md` son symlinks aquí.
+> Solo singularidades NO deducibles del código. Convenciones genéricas TS/Node ya las sabes.
+
+## 1. Ecosistema cluster (singularidades NO deducibles)
+
+- **Cluster**: k3s personal Hetzner (`coruscant`), ns `bots|webs|tools` (NUNCA `default`, vacío post-migración). DB: Postgres en Neon externo. GitOps: Argo CD ↔ repo `infra-live` (App-of-Apps).
+- **Secrets**: bitnami sealed-secrets. Cifrados en `infra-live/apps/<app>/secret.sealed.yaml`. Local dev: `direnv allow` (helper `use_kube_secret` pulls cluster, cache `.direnv/secrets/` 1h). Rotar/crear: `POST http://devops-agent-r2d2.bots.svc.cluster.local/api/reseal-secret` con `{namespace,name,data}`. **NUNCA** commitear plain secrets, ni `.env` con valores reales, ni `kubectl create secret` directo.
+- **Deploy**: CI `.github/workflows/build.yml` — `on:push main` build+push GHCR + `update-infra` job bumpea tag en infra-live (Argo redeploys prod). `on:pull_request` build solo con `sha-<head_sha[:7]>` (NO bump). NUNCA scripts deploy custom ni `kubectl apply` directo.
+- **Intra-cluster comms**: ClusterIP DNS `<svc>.<ns>.svc.cluster.local` (mismo ns: `<svc>`). **NUNCA** URL pública (`*.johannmoreno.dev`) desde código en cluster — rompe hairpin NAT.
+- **PR preview**: label `preview` en PR → ApplicationSet detecta (poll 30min) → crea ns `preview-<app>-pr-N` con kustomize override (ns + image tag + ingress host) → URL `<app>-pr-N.johannmoreno.dev`. Reflector replica `ghcr-secret` y per-app secrets a esa ns. Cierra PR → cleanup auto (Application + resources, ns ephemeral persiste).
+- **App nueva**: Telegram alisios-bot → "crear repositorio remix que [...]" → devops-agent worker scaffold full. O fork manual de `remix-pod-starter` + replace placeholders.
+- **NetworkPolicies**: default-deny per ns. Allow: DNS, traefik ingress (kube-system), egress internet (excluyendo cluster CIDR), intra-ns. Cross-ns blocked.
+- **Mesh VPN**: Headscale self-hosted (`headscale.johannmoreno.dev`). SSH a coruscant solo via tailnet (`100.64.0.0/10`) o IP residencial fallback.
+
+## Reglas duras (NUNCA)
+
+- ❌ `namespace: default` hardcoded en manifests k8s. Usa kustomize `namespace:` field o Argo destination.namespace.
+- ❌ Secrets plain en código/env/commits/PR descriptions.
+- ❌ `.env` real committed (`.env.example` sí, sin valores).
+- ❌ `kubectl apply -f`, `helm install`, deploy scripts custom en CI/Makefile.
+- ❌ URL pública `*.johannmoreno.dev` desde código corriendo en cluster.
+- ❌ Modificar job `update-infra` de build.yml (probado, no romper).
+- ❌ Postgres Deployment en cluster (DB es Neon externo).
+- ❌ Crear Argo Application a mano vía `kubectl apply` (usar pattern App-of-Apps via repo).
+
+## Profundidad
+
+Notas Mente Digital del usuario (`mente-digital.johannmoreno.dev`, search `cluster coruscant`): 16+ notas con arquitectura completa — sealed-secrets, App-of-Apps, NetworkPolicies, Reflector, ApplicationSet PR previews, /api/reseal-secret, Headscale, saga debug 2026-05-09/10, etc.
+
+`infra-live` repo = GitOps source of truth. Estructura:
+- `apps/<app>/` — manifests por app
+- `apps/_apps/` — Argo Application CRs (App-of-Apps)
+- `apps/_appsets/` — ApplicationSet PR generators
+- `apps/shared-{bots,webs,tools}/` — SealedSecrets compartidos
+- `apps/{reflector,sealed-secrets,traefik-middlewares,headscale,argocd-config}/` — infra components
+- `root.yaml` — bootstrap (kubectl apply una vez)
+
+## 2. Singularidades de `{{name}}`
+
+### Qué es
+{{description}}
+
+- **Tipo**: {{type}}
+- **ns destino**: `{{namespace}}`
+- **Image**: `ghcr.io/{{repoOwnerLower}}/{{name}}:sha-XXXXXXX`
+- **Manifests deploy**: viven en `infra-live/apps/{{name}}/` (NO en este repo). Editar este repo solo cambia el código de la app, no el deploy.
+
+### Local dev
+```bash
+direnv allow                # primera vez
+docker compose up           # con hot reload (si hay docker-compose.yml)
+# o
+npm install && npm run dev
+```
+
+### Si necesitas un secret nuevo
+NO crear `.env` con valor en repo. Workflow:
+
+```bash
+curl -X POST http://devops-agent-r2d2.bots.svc.cluster.local/api/reseal-secret \
+  -H 'content-type: application/json' \
+  -d '{
+    "namespace": "{{namespace}}",
+    "name": "{{name}}-secrets",
+    "data": { "MI_NUEVA_KEY": "valor-real" }
+  }'
+```
+
+Devuelve SealedSecret YAML. Copiar a `infra-live/apps/{{name}}/secret.sealed.yaml` y commit.
+
+Tras eso, en repo local: `direnv reload` pulls la nueva clave del cluster automático.

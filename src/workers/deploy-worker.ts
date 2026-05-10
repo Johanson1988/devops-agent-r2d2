@@ -199,16 +199,34 @@ async function main() {
       for (const [filePath, content] of Object.entries(projectFiles)) {
         const fullPath = path.join(tmpDir, filePath);
         const dir = path.dirname(fullPath);
-        
+
         // Create directory if it doesn't exist
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
           console.log(`   📁 Directorio creado: ${path.relative(tmpDir, dir)}`);
         }
-        
+
         fs.writeFileSync(fullPath, content);
         console.log(`   ✓ ${filePath} (${content.length} bytes)`);
       }
+      console.log('');
+
+      // Create AGENTS.md (canonical) + symlinks for Copilot/Claude (single-file, dual-agent).
+      console.log('🧠 Creando AGENTS.md + symlinks (CLAUDE.md, .github/copilot-instructions.md)...');
+      const agentsContent = templateService.generateAgentsFile(variables);
+      fs.writeFileSync(path.join(tmpDir, 'AGENTS.md'), agentsContent);
+      // Remove existing files if they came from the starter clone (template), then symlink.
+      const claudePath = path.join(tmpDir, 'CLAUDE.md');
+      if (fs.existsSync(claudePath) || fs.lstatSync(claudePath, { throwIfNoEntry: false } as any)?.isSymbolicLink?.()) {
+        try { fs.unlinkSync(claudePath); } catch { /* noop */ }
+      }
+      fs.symlinkSync('AGENTS.md', claudePath);
+      const copilotDir = path.join(tmpDir, '.github');
+      if (!fs.existsSync(copilotDir)) fs.mkdirSync(copilotDir, { recursive: true });
+      const copilotPath = path.join(copilotDir, 'copilot-instructions.md');
+      try { fs.unlinkSync(copilotPath); } catch { /* noop */ }
+      fs.symlinkSync('../AGENTS.md', copilotPath);
+      console.log('   ✓ AGENTS.md + CLAUDE.md (symlink) + .github/copilot-instructions.md (symlink)');
       console.log('');
 
       // Git add, commit and push

@@ -45,6 +45,22 @@ export class TemplateService {
   }
 
   /**
+   * Generate AGENTS.md content (singularidades del cluster + repo specifics).
+   * Will be referenced by symlinks CLAUDE.md and .github/copilot-instructions.md
+   * (created by deploy-worker after writing this file).
+   */
+  generateAgentsFile(variables: TemplateVariables): string {
+    try {
+      const templatePath = path.join(this.templatesDir, 'AGENTS.md.template');
+      const template = fs.readFileSync(templatePath, 'utf-8');
+      return this.replaceVariables(template, variables);
+    } catch (error) {
+      console.error('Error generating AGENTS.md:', error);
+      throw new Error('Failed to generate AGENTS.md');
+    }
+  }
+
+  /**
    * Generate .gitignore content
    */
   generateGitignore(): string {
