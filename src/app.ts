@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { apiRoutes } from './routes/api.routes';
 import { deployRoutes } from './routes/deploy.routes';
+import { secretRoutes } from './routes/secret.routes';
 import { config } from './config';
 
 export async function buildApp() {
@@ -28,6 +29,7 @@ export async function buildApp() {
   // Register routes
   await fastify.register(apiRoutes);
   await fastify.register(deployRoutes);
+  await fastify.register(secretRoutes);
 
   return fastify;
 }

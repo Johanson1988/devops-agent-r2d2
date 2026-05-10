@@ -21,8 +21,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install security updates and git (needed by worker to clone/push repos)
-RUN apk --no-cache upgrade && apk --no-cache add git
+# Install security updates, git (clone/push repos), curl (fetch sealed-secrets cert)
+RUN apk --no-cache upgrade && apk --no-cache add git curl ca-certificates
+
+# Install kubeseal CLI for sealing secrets via /api/reseal-secret endpoint.
+# Version pinned to match cluster sealed-secrets app version (v0.36.6).
+ARG KUBESEAL_VERSION=0.36.6
+RUN curl -fsSL "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION}/kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz" \
+      | tar -xz -C /usr/local/bin kubeseal && \
+    chmod +x /usr/local/bin/kubeseal
 
 # Copy package files
 COPY package*.json ./
