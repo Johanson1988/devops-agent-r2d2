@@ -30,3 +30,6 @@ coverage/
 # Temporary
 tmp/
 temp/
+
+# direnv cache (kubectl-pulled secrets — never commit)
+.direnv/
