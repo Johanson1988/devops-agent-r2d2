@@ -78,9 +78,11 @@ async function main() {
     console.log('Step 3: Generating initial repository content...');
     const timestamp = new Date().toISOString();
     
-    // Resolve target namespace from app type (api/bot → bots, otherwise → webs)
+    // Resolve target namespace from app type:
+    // - api/back (backend services) → bots ns
+    // - front/remix (websites) → webs ns
     const targetNamespace =
-      jobData.type === 'api' || jobData.type === 'bot' ? 'bots' : 'webs';
+      jobData.type === 'api' || jobData.type === 'back' ? 'bots' : 'webs';
 
     const variables = {
       name: jobData.name,

@@ -340,12 +340,12 @@ export class KubernetesService {
   /**
    * Map an app type to the target namespace where it should be deployed.
    * Post-migration ns scheme: bots/webs/tools.
-   * - api/bot apps → bots
-   * - remix/web apps → webs
-   * - everything else → webs (safer default)
+   * - api/back (backend services) → bots
+   * - front/remix (websites) → webs
+   * - undefined → webs (safer default)
    */
   private resolveTargetNamespace(appType?: string): string {
-    if (appType === 'api' || appType === 'bot') return 'bots';
+    if (appType === 'api' || appType === 'back') return 'bots';
     return 'webs';
   }
 
