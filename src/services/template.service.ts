@@ -15,6 +15,8 @@ interface TemplateVariables {
   timestamp: string;
   containerPort?: number;
   healthPath?: string;
+  // Target K8s namespace for the new app (bots/webs/tools).
+  namespace?: string;
 }
 
 export class TemplateService {
@@ -77,6 +79,7 @@ export class TemplateService {
     result = result.replace(/\{\{domain\}\}/g, variables.domain || '');
     result = result.replace(/\{\{containerPort\}\}/g, String(variables.containerPort || 80));
     result = result.replace(/\{\{healthPath\}\}/g, variables.healthPath || '/');
+    result = result.replace(/\{\{namespace\}\}/g, variables.namespace || 'webs');
 
     // Handle conditional blocks for domain and port
     if (variables.domain) {

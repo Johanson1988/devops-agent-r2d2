@@ -78,6 +78,10 @@ async function main() {
     console.log('Step 3: Generating initial repository content...');
     const timestamp = new Date().toISOString();
     
+    // Resolve target namespace from app type (api/bot → bots, otherwise → webs)
+    const targetNamespace =
+      jobData.type === 'api' || jobData.type === 'bot' ? 'bots' : 'webs';
+
     const variables = {
       name: jobData.name,
       description: jobData.description || `${jobData.name} - GitOps deployment`,
@@ -93,6 +97,7 @@ async function main() {
       // Set container port and health path based on deployment type
       containerPort: deploymentType === 'back' || deploymentType === 'remix' ? 3000 : 80,
       healthPath: deploymentType === 'back' ? '/health' : deploymentType === 'remix' ? '/healthz' : '/',
+      namespace: targetNamespace,
     };
 
     const readmeContent = templateService.generateReadme(variables);
