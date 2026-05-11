@@ -105,22 +105,31 @@ jobs:
       
       - name: Commit & push
         working-directory: infra-live
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          SHORT_SHA: ${{ needs.build.outputs.short_sha }}
+          HEAD_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+          HEAD_MSG: ${{ github.event.head_commit.message }}
         run: |
           set -euo pipefail
-          
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           git add .
-          
+
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore(${{ github.event.repository.name }}): deploy sha-${{ needs.build.outputs.short_sha }}
-          
-          Triggered by: ${{ github.repository }}@${{ github.sha }}
-          Message: ${{ github.event.head_commit.message }}"
-            
+            # Interpolate via env vars so quotes/newlines in HEAD_MSG cannot
+            # break the -m argument (GitHub Actions ${{ ... }} substitution
+            # injects raw text and would break with quotes in the message).
+            git commit -m "chore(${REPO_NAME}): deploy sha-${SHORT_SHA}
+
+Triggered by: ${HEAD_REPO}@${HEAD_SHA}
+Message: ${HEAD_MSG}"
+
             git push
             echo "✅ Successfully updated infra-live"
           fi
