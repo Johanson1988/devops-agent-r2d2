@@ -124,8 +124,8 @@ jobs:
           else
             # Build the message via printf piped into `git commit -F -` so that
             # quotes, newlines or "%" in HEAD_MSG cannot break the command.
-            # GitHub Actions ${{ ... }} substitution injects raw text, so we
-            # route the message through env vars and treat HEAD_MSG as data.
+            # GHA expression substitution injects raw text, so we route the
+            # message through env vars and treat HEAD_MSG as data.
             printf 'chore(%s): deploy sha-%s\n\nTriggered by: %s@%s\nMessage: %s\n' \
               "${REPO_NAME}" "${SHORT_SHA}" "${HEAD_REPO}" "${HEAD_SHA}" "${HEAD_MSG}" \
               | git commit -F -
