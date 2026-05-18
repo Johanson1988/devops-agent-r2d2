@@ -370,11 +370,16 @@ export class KubernetesService {
         namespace: 'argocd',
         annotations: {
           // ArgoCD Notifications: subscribe to deploy status triggers via Alisios webhook
-          // These annotations tell ArgoCD Notifications to send webhook events to Alisios Bot
           'notifications.argoproj.io/subscribe.on-deployed.alisios': '',
           'notifications.argoproj.io/subscribe.on-health-degraded.alisios': '',
           'notifications.argoproj.io/subscribe.on-sync-failed.alisios': '',
           'notifications.argoproj.io/subscribe.on-sync-running.alisios': '',
+          // ArgoCD Image Updater: poll ghcr.io for new sha-* tags, commit bump
+          // to infra-live via git write-back using coruscant-droids App credentials.
+          'argocd-image-updater.argoproj.io/image-list': `app=ghcr.io/${repoOwner.toLowerCase()}/${appName}`,
+          'argocd-image-updater.argoproj.io/app.update-strategy': 'newest-build',
+          'argocd-image-updater.argoproj.io/app.allow-tags': 'regexp:^sha-[0-9a-f]{7}$',
+          'argocd-image-updater.argoproj.io/write-back-method': 'git:secret:argocd/argocd-image-updater-git-cred',
         },
       },
       spec: {

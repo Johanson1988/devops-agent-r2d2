@@ -1,22 +1,16 @@
 import { Octokit } from '@octokit/rest';
+import { getOctokit } from '../auth/github-app';
 import { config } from '../config';
 import sodium from 'libsodium-wrappers';
 
 export class GitHubService {
-  private octokit: Octokit;
-
-  constructor() {
-    this.octokit = new Octokit({
-      auth: config.github.token,
-    });
-  }
 
   /**
    * Get authenticated user information (trivial API call for POC)
    */
   async getAuthenticatedUser() {
     try {
-      const { data } = await this.octokit.users.getAuthenticated();
+      const { data } = await (await getOctokit()).users.getAuthenticated();
       return {
         success: true,
         user: {
@@ -37,7 +31,7 @@ export class GitHubService {
    */
   async listRepositories(limit = 5) {
     try {
-      const { data } = await this.octokit.repos.listForAuthenticatedUser({
+      const { data } = await (await getOctokit()).repos.listForAuthenticatedUser({
         per_page: limit,
         sort: 'updated',
       });
@@ -62,7 +56,7 @@ export class GitHubService {
    */
   async repositoryExists(owner: string, repo: string): Promise<boolean> {
     try {
-      await this.octokit.repos.get({
+      await (await getOctokit()).repos.get({
         owner,
         repo,
       });
@@ -105,7 +99,7 @@ export class GitHubService {
 
       // Create repository
       // Note: If owner is an organization, use createInOrg, otherwise createForAuthenticatedUser
-      const { data } = await this.octokit.repos.createForAuthenticatedUser({
+      const { data } = await (await getOctokit()).repos.createForAuthenticatedUser({
         name,
         description: description || `Deployment repository for ${name}`,
         private: isPrivate,
@@ -140,7 +134,7 @@ export class GitHubService {
   ): Promise<void> {
     try {
       // 1. Get the repository's public key for encrypting secrets
-      const { data: publicKeyData } = await this.octokit.actions.getRepoPublicKey({
+      const { data: publicKeyData } = await (await getOctokit()).actions.getRepoPublicKey({
         owner,
         repo,
       });
@@ -153,7 +147,7 @@ export class GitHubService {
       const encryptedValue = sodium.to_base64(encBytes, sodium.base64_variants.ORIGINAL);
 
       // 3. Create or update the secret
-      await this.octokit.actions.createOrUpdateRepoSecret({
+      await (await getOctokit()).actions.createOrUpdateRepoSecret({
         owner,
         repo,
         secret_name: secretName,
@@ -177,7 +171,7 @@ export class GitHubService {
     events: string[] = ['pull_request', 'issues'],
   ): Promise<void> {
     try {
-      await this.octokit.repos.createWebhook({
+      await (await getOctokit()).repos.createWebhook({
         owner,
         repo,
         config: {
@@ -206,7 +200,7 @@ export class GitHubService {
     description?: string,
   ): Promise<void> {
     try {
-      await this.octokit.issues.createLabel({
+      await (await getOctokit()).issues.createLabel({
         owner,
         repo,
         name,

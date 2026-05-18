@@ -7,6 +7,9 @@ dotenv.config();
 interface Config {
   github: {
     token: string;
+    appId?: string;
+    privateKey?: string;
+    installationId?: string;
   };
   server: {
     port: number;
@@ -36,7 +39,10 @@ function getEnvVar(key: string, defaultValue?: string): string {
 
 export const config: Config = {
   github: {
-    token: getEnvVar('GITHUB_TOKEN'),
+    token: getEnvVar('GITHUB_TOKEN', ''),
+    appId: process.env.GITHUB_APP_ID,
+    privateKey: process.env.GITHUB_PRIVATE_KEY,
+    installationId: process.env.GITHUB_INSTALLATION_ID,
   },
   server: {
     port: parseInt(getEnvVar('PORT', '3000'), 10),
