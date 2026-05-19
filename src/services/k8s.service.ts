@@ -1,5 +1,6 @@
 import * as k8s from '@kubernetes/client-node';
 
+import { getInstallationToken } from '../auth/github-app';
 import { config } from '../config';
 
 // Helper function for timestamped logging
@@ -79,6 +80,7 @@ export class KubernetesService {
     deployRequest: any
   ): Promise<void> {
     const jobName = jobId.toLowerCase().replace(/_/g, '-');
+    const installationToken = await getInstallationToken();
     
     const jobManifest: k8s.V1Job = {
       apiVersion: 'batch/v1',
@@ -116,12 +118,7 @@ export class KubernetesService {
                 env: [
                   {
                     name: 'GITHUB_TOKEN',
-                    valueFrom: {
-                      secretKeyRef: {
-                        name: 'github-token',
-                        key: 'GITHUB_TOKEN',
-                      },
-                    },
+                    value: installationToken,
                   },
                   {
                     name: 'JOB_ID',
