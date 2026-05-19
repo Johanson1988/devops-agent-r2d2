@@ -6,7 +6,7 @@
 
 ## 1. Ecosistema cluster (singularidades NO deducibles)
 
-- **Cluster**: k3s personal Hetzner (`coruscant`), ns `bots|webs|tools` (NUNCA `default`, vacío post-migración). DB: Postgres en Neon externo. GitOps: Argo CD ↔ repo `infra-live` (App-of-Apps).
+- **Cluster**: k3s personal Hetzner (`coruscant`), ns `bots|webs|tools` (NUNCA `default`, vacío post-migración). DB: Postgres in-cluster (StatefulSet + PVC Hetzner volume, backup a Storage Box). GitOps: Argo CD ↔ repo `infra-live` (App-of-Apps).
 - **Secrets**: bitnami sealed-secrets. Cifrados en `infra-live/apps/<app>/secret.sealed.yaml`. Local dev: `direnv allow` (helper `use_kube_secret` pulls cluster, cache `.direnv/secrets/` 1h). Rotar/crear: `POST http://devops-agent-r2d2.bots.svc.cluster.local/api/reseal-secret` con `{namespace,name,data}`. **NUNCA** commitear plain secrets, ni `.env` con valores reales, ni `kubectl create secret` directo.
 - **Deploy**: CI `.github/workflows/build.yml` — `on:push main` build+push GHCR + `update-infra` job bumpea tag en infra-live (Argo redeploys prod). `on:pull_request` build solo con `sha-<head_sha[:7]>` (NO bump). NUNCA scripts deploy custom ni `kubectl apply` directo.
 - **Intra-cluster comms**: ClusterIP DNS `<svc>.<ns>.svc.cluster.local` (mismo ns: `<svc>`). **NUNCA** URL pública (`*.johannmoreno.dev`) desde código en cluster — rompe hairpin NAT.
@@ -23,7 +23,6 @@
 - ❌ `kubectl apply -f`, `helm install`, deploy scripts custom en CI/Makefile.
 - ❌ URL pública `*.johannmoreno.dev` desde código corriendo en cluster.
 - ❌ Modificar job `update-infra` de build.yml (probado, no romper).
-- ❌ Postgres Deployment en cluster (DB es Neon externo).
 - ❌ Crear Argo Application a mano vía `kubectl apply` (usar pattern App-of-Apps via repo).
 
 ## Profundidad
