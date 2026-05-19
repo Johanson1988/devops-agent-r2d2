@@ -7,9 +7,11 @@ export class GitHubService {
 
   async getAuthenticatedUser() {
     const { data } = await (await getOctokit()).apps.getAuthenticated();
+    const owner = (data?.owner as { login?: string } | undefined)?.login;
     return {
       success: true,
-      app: { slug: data?.slug, name: data?.name, owner: data?.owner?.login },
+      app: { slug: data?.slug, name: data?.name, owner },
+      user: { login: owner ?? 'Johanson1988' },
     };
   }
 
