@@ -5,25 +5,12 @@ import sodium from 'libsodium-wrappers';
 
 export class GitHubService {
 
-  /**
-   * Get authenticated user information (trivial API call for POC)
-   */
   async getAuthenticatedUser() {
-    try {
-      const { data } = await (await getOctokit()).users.getAuthenticated();
-      return {
-        success: true,
-        user: {
-          login: data.login,
-          name: data.name,
-          email: data.email,
-          public_repos: data.public_repos,
-        },
-      };
-    } catch (error) {
-      console.error('GitHub API error:', error);
-      throw new Error('Failed to fetch GitHub user data');
-    }
+    const { data } = await (await getOctokit()).apps.getAuthenticated();
+    return {
+      success: true,
+      app: { slug: data?.slug, name: data?.name, owner: data?.owner?.login },
+    };
   }
 
   /**
